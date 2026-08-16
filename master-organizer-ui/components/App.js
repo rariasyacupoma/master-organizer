@@ -210,9 +210,11 @@ export default {
           const stage  = ticket?.stages?.[stageIdx]
           if (stage?.checklist?.[itemIdx] != null) {
             stage.checklist[itemIdx].done = done
-            // Mirror server: auto-complete stage when all items are done
-            if (stage.checklist.every(i => i.done) && stage.status !== 'done') {
-              stage.status = 'done'
+            // Mirror server: auto-complete or revert stage status
+            if (stage.checklist.every(i => i.done)) {
+              if (stage.status !== 'done') stage.status = 'done'
+            } else if (stage.status === 'done') {
+              stage.status = 'in_progress'
             }
           }
         }
