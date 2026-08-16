@@ -922,19 +922,20 @@
     .cl-item input[type=checkbox] { accent-color:#2563eb; width:13px; height:13px; cursor:pointer; flex-shrink:0; margin-top:2px; }
 
     /* PR chips (checklist view) */
-    .pr-chips { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
-    .pr-chip { display:flex; align-items:center; gap:6px; min-width:0; font-size:0.72rem; padding:3px 8px; border-radius:5px; text-decoration:none; border:1px solid var(--border); background:#111; color:var(--muted); }
-    .pr-chip .pr-chip-icon { flex-shrink:0; font-size:0.7rem; }
+    .pr-chips { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+    .pr-chip { display:flex; align-items:center; gap:7px; min-width:0; font-size:0.72rem; padding:3px 8px; border-radius:3px; text-decoration:none; border-left:3px solid; background:transparent; color:var(--muted); }
+    .pr-chip.merged { border-left-color:#22c55e; }
+    .pr-chip.open   { border-left-color:#f59e0b; }
+    .pr-chip.closed { border-left-color:#f87171; }
+    .pr-chip .pr-chip-icon { font-size:0.68rem; flex-shrink:0; }
     .pr-chip.merged .pr-chip-icon { color:#22c55e; }
     .pr-chip.open   .pr-chip-icon { color:#f59e0b; }
     .pr-chip.closed .pr-chip-icon { color:#f87171; }
-    .pr-chip .pr-chip-repo { color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex-shrink:1; max-width:140px; }
-    .pr-chip .pr-chip-num  { font-weight:600; flex-shrink:0; }
-    .pr-chip.merged { border-color:#1e4a6e; background:#071828; }
+    .pr-chip .pr-chip-sep  { color:#333; flex-shrink:0; }
+    .pr-chip .pr-chip-repo { color:#52525b; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex-shrink:1; max-width:140px; }
+    .pr-chip .pr-chip-num  { font-weight:700; flex-shrink:0; }
     .pr-chip.merged .pr-chip-num { color:#7dd3fc; }
-    .pr-chip.open   { border-color:#064e3b; background:#0a1f17; }
     .pr-chip.open   .pr-chip-num { color:#34d399; }
-    .pr-chip.closed { border-color:#3f1515; background:#1a0a0a; }
     .pr-chip.closed .pr-chip-num { color:#f87171; }
 
     /* blocker / waiting notes */
