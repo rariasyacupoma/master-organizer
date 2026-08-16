@@ -239,7 +239,7 @@
     .epic-group-none .epic-group-count { color: var(--muted); background: var(--border); }
     .grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
       gap: 16px;
     }
 
@@ -872,6 +872,115 @@
 
     /* active card gets a green left border highlight */
     .card.tilt-active { border-color: #1a3a2a; box-shadow: inset 3px 0 0 #34d399; }
+
+    /* ── Focus mode ── */
+    #focus-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.82);
+      backdrop-filter: blur(3px);
+      -webkit-backdrop-filter: blur(3px);
+      z-index: 50;
+      cursor: pointer;
+    }
+    #focus-backdrop.visible { display: block; }
+    .card.focused {
+      position: relative;
+      z-index: 51;
+      box-shadow: 0 0 0 1px #3a3a3a, 0 24px 64px rgba(0, 0, 0, 0.9);
+      cursor: default;
+    }
+
+    /* ══════════════════════════════════
+       StageChecklist view
+    ══════════════════════════════════ */
+
+    /* overall progress bar */
+    .overall-progress { display:flex; flex-direction:column; gap:4px; }
+    .progress-bar-track { height:4px; background:var(--border); border-radius:99px; overflow:hidden; }
+    .progress-bar-fill { height:100%; border-radius:99px; }
+    .progress-bar-fill.normal  { background:#2563eb; }
+    .progress-bar-fill.blocked { background:#ef4444; }
+    .progress-bar-fill.waiting { background:#d97706; }
+    .progress-label { font-size:0.75rem; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
+    .blocker-pill { font-size:0.7rem; font-weight:700; padding:1px 8px; border-radius:99px; display:inline-flex; align-items:center; gap:4px; }
+    .blocker-pill.blocked { background:#3b0a0a; color:#f87171; }
+    .blocker-pill.waiting { background:#1c1a07; color:#fbbf24; }
+
+    /* timeline rail */
+    .cl { display:flex; flex-direction:column; position:relative; padding-left:24px; }
+    .cl::before { content:''; position:absolute; left:5px; top:12px; bottom:12px; width:1px; background:var(--border); }
+    .cl-stage { display:flex; flex-direction:column; }
+    .cl-stage-hdr { display:flex; align-items:center; gap:8px; position:relative; padding:6px 0; cursor:pointer; user-select:none; min-width:0; }
+    .cl-node { position:absolute; left:-24px; width:12px; height:12px; border-radius:50%; border:2px solid #333; background:var(--bg); flex-shrink:0; }
+    .cl-node.done    { background:#22c55e; border-color:#22c55e; }
+    .cl-node.current { background:var(--bg); border-color:#38bdf8; box-shadow:0 0 0 3px #38bdf820; }
+    .cl-node.blocked { background:var(--bg); border-color:#ef4444; box-shadow:0 0 0 3px #ef444420; }
+    .cl-node.waiting { background:var(--bg); border-color:#d97706; box-shadow:0 0 0 3px #d9770620; }
+    .cl-node.future  { border-color:#2a2a2a; }
+    .cl-stage-name { flex:1; font-size:0.82rem; font-weight:700; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .cl-stage.open .cl-stage-name { white-space:normal; }
+    .cl-stage-name.done    { color:#2a3a2a; }
+    .cl-stage-name.current { color:var(--text); }
+    .cl-stage-name.blocked { color:#f87171; }
+    .cl-stage-name.waiting { color:#fbbf24; }
+    .cl-stage-name.future  { color:var(--muted); }
+    /* fraction + bar */
+    .cl-frac-bar { display:flex; align-items:center; gap:6px; flex-shrink:0; }
+    .cl-frac { font-size:0.7rem; font-weight:600; color:var(--muted); white-space:nowrap; }
+    .cl-frac.blocked { color:#f87171; }
+    .cl-frac.waiting { color:#fbbf24; }
+    .cl-frac-track { width:48px; height:3px; background:var(--border); border-radius:99px; overflow:hidden; flex-shrink:0; }
+    .cl-frac-fill { height:100%; border-radius:99px; }
+    .cl-frac-fill.done    { background:#22c55e; }
+    .cl-frac-fill.current { background:#2563eb; }
+    .cl-frac-fill.blocked { background:#ef4444; }
+    .cl-frac-fill.waiting { background:#d97706; }
+    .cl-chevron { font-size:0.6rem; color:#333; transition:transform .15s; flex-shrink:0; }
+    .cl-stage.open .cl-chevron { transform:rotate(180deg); color:var(--muted); }
+    .cl-body { display:none; padding:2px 0 10px; flex-direction:column; gap:2px; }
+    .cl-stage.open .cl-body { display:flex; }
+    .cl-pr-row { display:flex; align-items:flex-start; gap:6px; padding:3px 0 6px; min-width:0; }
+    .cl-pr-label { font-size:0.68rem; color:#383838; padding-top:4px; flex-shrink:0; }
+    .cl-item { display:flex; align-items:flex-start; gap:8px; padding:4px 0; font-size:0.8rem; color:var(--muted); cursor:pointer; line-height:1.4; }
+    .cl-item.done    { color:#2a3a2a; text-decoration:line-through; }
+    .cl-item.current { color:var(--text); }
+    .cl-item.blocked { color:#f87171; }
+    .cl-item.waiting { color:#fbbf24; }
+    .cl-item input[type=checkbox] { accent-color:#2563eb; width:13px; height:13px; cursor:pointer; flex-shrink:0; margin-top:2px; }
+
+    /* PR chips (checklist view) */
+    .pr-chips { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
+    .pr-chip { display:flex; align-items:center; gap:6px; min-width:0; font-size:0.72rem; padding:3px 8px; border-radius:5px; text-decoration:none; border:1px solid var(--border); background:#111; color:var(--muted); }
+    .pr-chip .pr-chip-repo { color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex-shrink:1; max-width:140px; }
+    .pr-chip .pr-chip-num  { font-weight:600; flex-shrink:0; }
+    .pr-chip.merged { border-color:#1e4a6e; background:#071828; }
+    .pr-chip.merged .pr-chip-num { color:#7dd3fc; }
+    .pr-chip.open   { border-color:#064e3b; background:#0a1f17; }
+    .pr-chip.open   .pr-chip-num { color:#34d399; }
+    .pr-chip.closed { border-color:#3f1515; background:#1a0a0a; }
+    .pr-chip.closed .pr-chip-num { color:#f87171; }
+    /* env-tag colours come from the shared rules above; no override needed here */
+
+    /* blocker note */
+    .blocker-note { font-size:0.78rem; padding:7px 10px; border-radius:6px; line-height:1.4; display:flex; gap:7px; align-items:flex-start; }
+    .blocker-note.blocked { background:#1f0808; border:1px solid #7f1d1d; color:#fca5a5; }
+    .blocker-note.waiting { background:#1a1200; border:1px solid #78350f; color:#fcd34d; }
+
+    /* action button row (StageChecklist cards) */
+    .card-actions { display:flex; gap:6px; padding-top:10px; border-top:1px solid var(--border); margin-top:auto; align-items:center; }
+    .btn { display:inline-flex; align-items:center; gap:5px; font-size:0.75rem; font-weight:600; padding:5px 12px; border-radius:6px; cursor:pointer; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:inherit; transition:all .15s; }
+    .btn:hover { background:#1f1f1f; color:var(--text); border-color:#3a3a3a; }
+    .btn-terminal { border-color:#1e3a50; color:#4a8fa8; }
+    .btn-terminal:hover { background:#071828; color:#38bdf8; border-color:#2563eb; }
+    .btn-terminal.lit { background:#071828; color:#38bdf8; border-color:#2563eb; }
+    .btn-plan { border-color:#3a3010; color:#71600a; }
+    .btn-plan:hover { background:#1a1200; color:#fcd34d; border-color:#78350f; }
+    .btn-deploy { background:#0f1a12; border-color:#1e3a28; color:#4b7a5e; }
+    .btn-deploy:hover { background:#162a1e; border-color:#34d399; color:#34d399; }
+    .btn-deploy.active { background:#0f1f1a; border-color:#34d399; color:#34d399; }
+    .btn-spacer { flex:1; }
   </style>
 </head>
 <body>
@@ -914,6 +1023,7 @@
   </main>
 </div>
 
+<div id="focus-backdrop" onclick="unfocusCard()"></div>
 <div id="toast-container"></div>
 
 <div id="deploy-overlay">
@@ -1025,9 +1135,41 @@ function closePlan() {
 
 window.addEventListener('keydown', e => {
   if (e.key !== 'Escape') return;
-  if (document.getElementById('plan-overlay').classList.contains('visible')) history.back();
-  if (document.getElementById('deploy-overlay').classList.contains('visible')) history.back();
+  if (document.getElementById('plan-overlay').classList.contains('visible')) { history.back(); return; }
+  if (document.getElementById('deploy-overlay').classList.contains('visible')) { history.back(); return; }
+  unfocusCard();
 });
+
+// ── Card focus mode ─────────────────────────────────────────────────────
+
+let _focusedCard = null;
+
+function focusCard(card) {
+  if (_focusedCard === card) return;
+  if (_focusedCard) _focusedCard.classList.remove('focused');
+  _focusedCard = card;
+  card.classList.add('focused');
+  document.getElementById('focus-backdrop').classList.add('visible');
+}
+
+function unfocusCard() {
+  if (!_focusedCard) return;
+  _focusedCard.classList.remove('focused');
+  _focusedCard = null;
+  document.getElementById('focus-backdrop').classList.remove('visible');
+}
+
+// Attach click listener to cards — trigger focus only on clicks on empty card space,
+// not on interactive elements (buttons, links, checkboxes, labels).
+function wireCardFocus() {
+  document.querySelectorAll('.card').forEach(card => {
+    card.addEventListener('click', e => {
+      if (e.target.closest('a, button, input, label, .cl-stage-hdr')) return;
+      if (card.classList.contains('focused')) return;
+      focusCard(card);
+    });
+  });
+}
 
 window.addEventListener('popstate', e => {
   if (document.getElementById('plan-overlay').classList.contains('visible')) {
@@ -1040,16 +1182,6 @@ window.addEventListener('popstate', e => {
   }
 });
 
-async function checkPlanAvailability(ticketId) {
-  try {
-    const res = await fetch(`/implementation-plan/${ticketId}`);
-    const data = await res.json();
-    const slot = document.getElementById(`plan-btn-${ticketId}`);
-    if (slot && data.ok) {
-      slot.innerHTML = `<button class="plan-btn available" onclick="viewPlan('${ticketId}')">📋 plan</button>`;
-    }
-  } catch {}
-}
 
 function toggleSidebar() {
   const panel = document.getElementById('sidepanel');
@@ -1224,15 +1356,152 @@ async function load() {
 
   renderGrid(tickets);
   renderTable(tickets);
-  tickets.forEach(t => checkPlanAvailability(t.id));
   applyTiltCardHighlights();
   applyWorkingBadges();
+  wireCardFocus();
 }
 
-function cardHtml(t) {
-  return `<div class="card">
+// ── StageChecklist helpers ──────────────────────────────────────────────
+
+const TERMINAL_SVG = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3L4.5 6L1.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+const PLAN_SVG     = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`;
+const DEPLOY_SVG   = `<svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v7M6 1.5L3.5 4M6 1.5L8.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>`;
+
+function stageNodeClass(stage) {
+  if (stage.status === 'done')       return 'done';
+  if (stage.status === 'in_progress') return 'current';
+  if (stage.status === 'blocked')    return 'blocked';
+  if (stage.status === 'waiting')    return 'waiting';
+  return 'future';
+}
+
+function clPrChip(pr) {
+  // Reuse the same live-version env-tag logic as prChip in the Simple view
+  const repoShort = pr.repo.length > 18 ? pr.repo.slice(0, 17) + '…' : pr.repo;
+  let envTags = '';
+  if (pr.state === 'merged' && pr.version) {
+    const svc       = pr.repo;
+    const qaVer     = _deployments.qa[svc]?.version;
+    const prodVer   = _deployments.prod[svc]?.version;
+    const queuedVer = _versioning[svc];
+    const inQA      = qaVer     && _versionGte(qaVer,     pr.version);
+    const inProd    = prodVer   && _versionGte(prodVer,   pr.version);
+    const inQueue   = queuedVer && _versionGte(queuedVer, pr.version);
+    const showProd   = inProd;
+    const showQA     = inQA   && !inProd;
+    const showQueued = inQueue && !inQA && !inProd;
+    envTags = `<span class="pr-env-tags">
+      <span class="env-tag ${showQueued ? 'queued-on' : 'queued-off'}" title="${inQueue ? `Queued for QA (${queuedVer})` : `Not queued`}">Queued</span>
+      <span class="env-tag ${showQA     ? 'qa-on'     : 'qa-off'}"     title="${inQA   ? `In QA (${qaVer})`              : `Not in QA`}">QA</span>
+      <span class="env-tag ${showProd   ? 'prod-on'   : 'prod-off'}"   title="${inProd ? `In Prod (${prodVer})`          : `Not in Prod`}">Prod</span>
+    </span>`;
+  }
+  return `<a class="pr-chip ${pr.state}" href="${pr.url}" target="_blank">
+    <span class="pr-chip-repo" title="${pr.repo}">${repoShort}</span>
+    <span class="pr-chip-num">#${pr.number}</span>
+    ${envTags}
+  </a>`;
+}
+
+function clStageHtml(stage, stageIdx, ticketId) {
+  const nc = stageNodeClass(stage);
+  const doneCount = stage.checklist.filter(i => i.done).length;
+  const total     = stage.checklist.length;
+  const pct       = total ? Math.round(doneCount / total * 100) : 0;
+  const fracCls   = (stage.status === 'blocked') ? 'blocked' : (stage.status === 'waiting') ? 'waiting' : '';
+  const fillCls   = nc;
+  const autoOpen  = stage.status === 'in_progress' || stage.status === 'blocked' || stage.status === 'waiting';
+
+  const prsHtml = stage.prs && stage.prs.length
+    ? `<div class="cl-pr-row"><span class="cl-pr-label">PRs</span><div class="pr-chips">${stage.prs.map(clPrChip).join('')}</div></div>`
+    : '';
+
+  const blockerHtml = stage.blockerNote
+    ? `<div class="blocker-note ${stage.status}" style="margin-bottom:6px">
+        <span>${stage.status === 'blocked' ? '🚫' : '⏳'}</span>
+        <span>${stage.blockerNote}</span>
+       </div>`
+    : '';
+
+  const itemsHtml = stage.checklist.map((item, itemIdx) => {
+    const itemCls = item.done ? 'done' : (nc === 'current' ? 'current' : (nc === 'blocked' ? 'blocked' : (nc === 'waiting' ? 'waiting' : '')));
+    return `<label class="cl-item ${itemCls}">
+      <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleChecklistItem('${ticketId}', ${stageIdx}, ${itemIdx}, this.checked)">
+      ${item.label}
+    </label>`;
+  }).join('');
+
+  return `<div class="cl-stage ${autoOpen ? 'open' : ''}">
+    <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+      <div class="cl-node ${nc}"></div>
+      <span class="cl-stage-name ${nc}">${stage.name}</span>
+      <div class="cl-frac-bar">
+        <span class="cl-frac ${fracCls}">${doneCount}/${total}</span>
+        <div class="cl-frac-track"><div class="cl-frac-fill ${fillCls}" style="width:${pct}%"></div></div>
+      </div>
+      <span class="cl-chevron">▼</span>
+    </div>
+    <div class="cl-body">
+      ${blockerHtml}
+      ${prsHtml}
+      ${itemsHtml}
+    </div>
+  </div>`;
+}
+
+function stageChecklistCard(t, isWorking) {
+  const allItems  = t.stages.flatMap(s => s.checklist);
+  const doneTotal = allItems.filter(i => i.done).length;
+  const total     = allItems.length;
+  const pct       = total ? Math.round(doneTotal / total * 100) : 0;
+  const ticketStatus = t.status;
+  const barCls = ticketStatus === 'blocked' ? 'blocked' : ticketStatus === 'waiting' ? 'waiting' : 'normal';
+
+  const progressLabel = (ticketStatus === 'blocked')
+    ? `<span class="blocker-pill blocked">🚫 Blocked</span>`
+    : (ticketStatus === 'waiting')
+    ? `<span class="blocker-pill waiting">⏳ Waiting</span>`
+    : `<span>${pct}%</span>`;
+
+  const currentStageIdx = t.stages.findIndex(s => s.status === 'in_progress' || s.status === 'blocked' || s.status === 'waiting');
+  const stageLabel = currentStageIdx >= 0
+    ? `<span class="stage-label">Stage ${currentStageIdx + 1}</span>`
+    : '';
+
+  return `<div class="card" id="card-${t.id}">
+    <div class="card-header">
+      <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+        <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+          <a class="card-id" href="${t.url}" target="_blank">${t.id}</a>
+          ${badge(t.status)}
+        </div>
+        <div id="working-badge-${t.id}"></div>
+        <div class="card-title">${t.title}</div>
+      </div>
+    </div>
+    <div class="card-meta">
+      ${t.services.map(serviceTag).join('')}
+      ${stageLabel}
+    </div>
+    <div class="overall-progress">
+      <div class="progress-label"><span>Progress</span>${progressLabel}</div>
+      <div class="progress-bar-track"><div class="progress-bar-fill ${barCls}" style="width:${pct}%"></div></div>
+    </div>
+    <div class="cl">
+      ${t.stages.map((s, i) => clStageHtml(s, i, t.id)).join('')}
+    </div>
+    <div class="card-actions">
+      <button class="btn btn-terminal ${isWorking ? 'lit' : ''}" id="terminal-btn-${t.id}" onclick="focusTab('${t.id}', this)">${TERMINAL_SVG} Terminal</button>
+      <button class="btn btn-plan" id="plan-btn-${t.id}" onclick="viewPlan('${t.id}')">${PLAN_SVG} Plan</button>
+      <div class="btn-spacer"></div>
+      <button class="btn btn-deploy" id="deploy-btn-${t.id}" onclick="switchTicket('${t.id}', this)">${DEPLOY_SVG} Deploy</button>
+    </div>
+  </div>`;
+}
+
+function simpleCard(t) {
+  return `<div class="card" id="card-${t.id}">
       <div class="card-header">
-        <div class="theme-pip" style="background:${THEME_COLOR[t.theme]};align-self:stretch"></div>
         <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
             <a class="card-id" href="${t.url}" target="_blank">${t.id}</a>
@@ -1244,7 +1513,7 @@ function cardHtml(t) {
       </div>
       <div class="card-meta">
         ${t.services.map(serviceTag).join('')}
-        <span class="stage-label">Stage ${t.currentStage}</span>
+        ${t.currentStage != null ? `<span class="stage-label">Stage ${t.currentStage}</span>` : ''}
       </div>
       ${t.latestUpdate ? `
         <div class="latest-update">
@@ -1256,15 +1525,35 @@ function cardHtml(t) {
           <div class="next-steps-title">▶ Next steps</div>
           <ol>${t.nextSteps.map(s => `<li>${s}</li>`).join('')}</ol>
         </div>` : ''}
-      ${t.prs.length ? `<div class="prs-list" style="border-top:1px solid var(--border);padding-top:14px">${t.prs.map(prChip).join('')}</div>` : ''}
+      ${t.prs && t.prs.length ? `<div class="prs-list" style="border-top:1px solid var(--border);padding-top:14px">${t.prs.map(prChip).join('')}</div>` : ''}
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;gap:6px;padding-top:10px;border-top:1px solid var(--border)">
-        <span id="plan-btn-${t.id}"></span>
+        <button class="plan-btn" id="plan-btn-${t.id}" onclick="viewPlan('${t.id}')">📋 plan</button>
         <div style="display:flex;gap:6px;margin-left:auto">
           <span id="deploy-btn-${t.id}"></span>
           <button class="focus-btn" onclick="focusTab('${t.id}', this)">🖥 terminal</button>
         </div>
       </div>
     </div>`;
+}
+
+function cardHtml(t) {
+  return t.stages ? stageChecklistCard(t, !!_workingStatus[t.id]) : simpleCard(t);
+}
+
+// ── Checklist toggle ────────────────────────────────────────────────────
+
+async function toggleChecklistItem(ticketId, stageIdx, itemIdx, done) {
+  try {
+    const res = await fetch('/toggle-checklist-item', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId, stageIdx, itemIdx, done })
+    });
+    const data = await res.json();
+    if (!data.ok) console.error('toggle failed:', data.error);
+  } catch (e) {
+    console.error('toggle error:', e);
+  }
 }
 
 function renderGrid(tickets) {
@@ -1484,6 +1773,12 @@ function applyWorkingBadges() {
       el.innerHTML = '';
     }
   });
+  // Keep terminal button lit/unlit in StageChecklist cards
+  _lastTickets.forEach(t => {
+    if (!t.stages) return;
+    const btn = document.getElementById(`terminal-btn-${t.id}`);
+    if (btn) btn.classList.toggle('lit', !!_workingStatus[t.id]);
+  });
 }
 
 function notifyDone(ticketId) {
@@ -1582,8 +1877,24 @@ function renderTiltSection() {
 
 function applyTiltCardHighlights() {
   const { active, switchable } = _tiltStatus;
-  // Inject/update deploy buttons into card placeholders
+  const switchableIds = new Set(switchable.map(t => t.id));
+  // Update deploy buttons for all StageChecklist cards (already in DOM)
+  _lastTickets.forEach(ticket => {
+    if (!ticket.stages) return;
+    const btn = document.getElementById(`deploy-btn-${ticket.id}`);
+    if (!btn) return;
+    const isActive = ticket.id === active;
+    const isSwitchable = switchableIds.has(ticket.id);
+    btn.className = `btn btn-deploy${isActive ? ' active' : ''}`;
+    btn.disabled = !isSwitchable;
+    btn.style.opacity = isSwitchable ? '' : '0.3';
+    btn.style.cursor = isSwitchable ? '' : 'default';
+    btn.innerHTML = `${DEPLOY_SVG} ${isActive ? 'Deployed' : 'Deploy'}`;
+  });
+  // Simple cards still inject their legacy deploy button
   switchable.forEach(t => {
+    const ticket = _lastTickets.find(tk => tk.id === t.id);
+    if (ticket && ticket.stages) return;
     const slot = document.getElementById(`deploy-btn-${t.id}`);
     if (!slot) return;
     const isActive = t.id === active;

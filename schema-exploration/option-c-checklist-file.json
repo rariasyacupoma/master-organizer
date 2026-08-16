@@ -1,0 +1,97 @@
+{
+  "_comment": "OPTION C — master-organizer.json stays lean; checklist lives in a separate per-ticket file.",
+  "_tradeoffs": [
+    "PROS: master-organizer.json stays small and fast to edit by hand — same shape as today",
+    "PROS: checklist state (checked items, blocker notes) is mutable and saved separately without touching the main file",
+    "PROS: sync-prs.sh only needs to update the lean prs array — no stage nesting to navigate",
+    "PROS: a ticket with no checklist file yet just falls back to the latestUpdate/nextSteps view — zero migration cost",
+    "CONS: data is now in two places; dashboard server needs to read both and merge on every request",
+    "CONS: checklist.json must be kept in $JIRA_TICKETS_WORKDIR/<id>/ which is machine-local (not in the repo)"
+  ],
+
+  "master-organizer.json (unchanged shape)": {
+    "tickets": [
+      {
+        "id": "CBP-37271",
+        "title": "Migrate recent_org_records from Cassandra to Postgres",
+        "url": "https://cloudbees.atlassian.net/browse/CBP-37271",
+        "status": "in_progress",
+        "theme": "cass2pg",
+        "services": ["apidao", "rbac-service", "cass2pg-migrate"],
+        "currentStage": 5,
+        "latestUpdate": "Bulk migration run in QA and prod — row counts validated",
+        "nextSteps": ["...same as today..."],
+        "prs": [
+          { "repo": "apidao",         "number": 676, "state": "merged", "version": null },
+          { "repo": "rbac-service",   "number": 838, "state": "merged", "version": "0.1.3585" },
+          { "repo": "cass2pg-migrate","number": 229, "state": "merged", "version": null },
+          { "repo": "rbac-service",   "number": 839, "state": "merged", "version": "0.1.3621" },
+          { "repo": "rbac-service",   "number": 842, "state": "open",   "version": null }
+        ]
+      }
+    ]
+  },
+
+  "$JIRA_TICKETS_WORKDIR/CBP-37271/checklist.json (new, separate file)": {
+    "stages": [
+      {
+        "name": "Add Timestamp to RecentOrgRecord",
+        "status": "done",
+        "checklist": [
+          { "label": "PR created",        "done": true },
+          { "label": "PR merged",         "done": true },
+          { "label": "In QA & validated", "done": true },
+          { "label": "In Prod",           "done": true }
+        ],
+        "prs": [676]
+      },
+      {
+        "name": "Dual-write to Postgres",
+        "status": "done",
+        "checklist": [
+          { "label": "PR created",        "done": true },
+          { "label": "PR merged",         "done": true },
+          { "label": "In QA & validated", "done": true },
+          { "label": "In Prod",           "done": true }
+        ],
+        "prs": [838]
+      },
+      {
+        "name": "Bulk migration",
+        "status": "done",
+        "checklist": [
+          { "label": "PR created",            "done": true },
+          { "label": "PR merged",             "done": true },
+          { "label": "Migration run in QA",   "done": true },
+          { "label": "Migration run in Prod", "done": true }
+        ],
+        "prs": [229]
+      },
+      {
+        "name": "Feature-flag reads from Postgres",
+        "status": "done",
+        "checklist": [
+          { "label": "PR created",           "done": true },
+          { "label": "PR merged",            "done": true },
+          { "label": "Flag enabled in QA",   "done": true },
+          { "label": "Flag enabled in Prod", "done": true }
+        ],
+        "prs": [839]
+      },
+      {
+        "name": "Remove all Cassandra code",
+        "status": "in_progress",
+        "blockerNote": null,
+        "checklist": [
+          { "label": "PR created",        "done": true  },
+          { "label": "PR merged",         "done": false },
+          { "label": "In QA & validated", "done": false },
+          { "label": "In Prod",           "done": false }
+        ],
+        "prs": [842]
+      }
+    ],
+
+    "_note": "prs here are PR numbers — the server joins them with the full PR objects from master-organizer.json at request time"
+  }
+}

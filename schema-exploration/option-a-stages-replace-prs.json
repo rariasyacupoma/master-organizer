@@ -1,0 +1,124 @@
+{
+  "_comment": "OPTION A — stages array fully replaces the flat prs list.",
+  "_tradeoffs": [
+    "PROS: stages are the primary structure; every PR is owned by a stage; deployment state lives on the PR where it belongs",
+    "PROS: checklist items per stage map 1:1 to what the UI renders",
+    "PROS: blocked/waiting note lives inside the stage that is blocked",
+    "CONS: bigger file; existing sync-prs.sh needs updating to write into the right stage",
+    "CONS: no fallback — if you haven't defined stages yet the tile shows nothing"
+  ],
+  "tickets": [
+    {
+      "id": "CBP-37271",
+      "title": "Migrate recent_org_records from Cassandra to Postgres",
+      "url": "https://cloudbees.atlassian.net/browse/CBP-37271",
+      "status": "in_progress",
+      "theme": "cass2pg",
+      "services": ["apidao", "rbac-service", "cass2pg-migrate"],
+
+      "stages": [
+        {
+          "name": "Add Timestamp to RecentOrgRecord",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",           "done": true  },
+            { "label": "PR merged",            "done": true  },
+            { "label": "In QA & validated",    "done": true  },
+            { "label": "In Prod",              "done": true  }
+          ],
+          "prs": [
+            {
+              "repo": "apidao",
+              "number": 676,
+              "url": "https://github.com/calculi-corp/apidao/pull/676",
+              "state": "merged",
+              "version": null,
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Dual-write to Postgres",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",           "done": true  },
+            { "label": "PR merged",            "done": true  },
+            { "label": "In QA & validated",    "done": true  },
+            { "label": "In Prod",              "done": true  }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service",
+              "number": 838,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/838",
+              "state": "merged",
+              "version": "0.1.3585",
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Bulk migration mapping",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",           "done": true  },
+            { "label": "PR merged",            "done": true  },
+            { "label": "Migration run in QA",  "done": true  },
+            { "label": "Migration run in Prod","done": true  }
+          ],
+          "prs": [
+            {
+              "repo": "cass2pg-migrate",
+              "number": 229,
+              "url": "https://github.com/calculi-corp/cass2pg-migrate/pull/229",
+              "state": "merged",
+              "version": null,
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Feature-flag reads from Postgres",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",           "done": true  },
+            { "label": "PR merged",            "done": true  },
+            { "label": "Flag enabled in QA",   "done": true  },
+            { "label": "Flag enabled in Prod", "done": true  }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service",
+              "number": 839,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/839",
+              "state": "merged",
+              "version": "0.1.3621",
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Remove all Cassandra code",
+          "status": "in_progress",
+          "blockerNote": null,
+          "checklist": [
+            { "label": "PR created",           "done": true  },
+            { "label": "PR merged",            "done": false },
+            { "label": "In QA & validated",    "done": false },
+            { "label": "In Prod",              "done": false }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service",
+              "number": 842,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/842",
+              "state": "open",
+              "version": null,
+              "deployments": { "qa": false, "prod": false }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

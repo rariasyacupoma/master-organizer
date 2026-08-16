@@ -17,6 +17,9 @@ WATCHER_SCRIPT = os.path.join(GR_ALL_DIR, ".ticket-switcher", "ticket-watcher-da
 _sse_clients = []
 _sse_lock = threading.Lock()
 
+# Serialise all read-modify-write operations on master-organizer.json
+_json_lock = threading.Lock()
+
 def _watch_json():
     last_mtime = None
     while True:
@@ -346,6 +349,33 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                 self.respond(result.returncode == 0, result.stdout + result.stderr)
             except subprocess.TimeoutExpired:
                 self.respond(False, "Timed out")
+
+        elif self.path == "/toggle-checklist-item":
+            ticket_id  = body.get("ticketId")
+            stage_idx  = body.get("stageIdx")
+            item_idx   = body.get("itemIdx")
+            done       = body.get("done")
+            if ticket_id is None or stage_idx is None or item_idx is None or done is None:
+                self.send_response(400)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(b'{"ok":false,"error":"missing fields"}')
+                return
+            with _json_lock:
+                try:
+                    with open(JSON_FILE) as f:
+                        data = json.load(f)
+                    ticket = next((t for t in data.get("tickets", []) if t["id"] == ticket_id), None)
+                    if ticket is None:
+                        raise KeyError(f"ticket {ticket_id} not found")
+                    ticket["stages"][stage_idx]["checklist"][item_idx]["done"] = bool(done)
+                    tmp = JSON_FILE + ".tmp"
+                    with open(tmp, "w") as f:
+                        json.dump(data, f, indent=2)
+                    os.replace(tmp, JSON_FILE)
+                    self.respond(True)
+                except (KeyError, IndexError, TypeError) as e:
+                    self.respond(False, str(e))
 
         else:
             self.send_response(404)

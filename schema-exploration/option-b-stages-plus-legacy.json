@@ -1,0 +1,152 @@
+{
+  "_comment": "OPTION B — stages added alongside the existing prs/latestUpdate/nextSteps fields.",
+  "_tradeoffs": [
+    "PROS: fully backward-compatible — dashboard still works for tickets without stages defined",
+    "PROS: migration is gradual: add stages to a ticket when you're ready, leave the rest as-is",
+    "PROS: latestUpdate still useful as a one-liner summary shown in compact/table view",
+    "CONS: two representations of the same PRs (flat prs list + nested inside stages) can drift out of sync",
+    "CONS: sync-prs.sh needs to know which list is the source of truth and update both or pick one"
+  ],
+  "tickets": [
+    {
+      "id": "CBP-37271",
+      "title": "Migrate recent_org_records from Cassandra to Postgres",
+      "url": "https://cloudbees.atlassian.net/browse/CBP-37271",
+      "status": "in_progress",
+      "theme": "cass2pg",
+      "services": ["apidao", "rbac-service", "cass2pg-migrate"],
+
+      "currentStage": 5,
+      "latestUpdate": "Bulk migration run in QA and prod — row counts validated",
+      "nextSteps": [
+        "Enable IsReadEnabled flag for recent_org_records in QA, validate reads from Postgres",
+        "Enable IsReadEnabled flag for recent_org_records in prod, validate reads from Postgres",
+        "Once flag validated in prod: merge Stage 5 PR #842"
+      ],
+
+      "prs": [
+        { "repo": "apidao",        "number": 676, "url": "...", "label": "Stage 1", "state": "merged", "version": null },
+        { "repo": "rbac-service",  "number": 838, "url": "...", "label": "Stage 2", "state": "merged", "version": "0.1.3585" },
+        { "repo": "cass2pg-migrate","number": 229,"url": "...", "label": "Stage 3", "state": "merged", "version": null },
+        { "repo": "rbac-service",  "number": 839, "url": "...", "label": "Stage 4", "state": "merged", "version": "0.1.3621" },
+        { "repo": "rbac-service",  "number": 842, "url": "...", "label": "Stage 5", "state": "open",   "version": null }
+      ],
+
+      "stages": [
+        {
+          "name": "Add Timestamp to RecentOrgRecord",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",        "done": true },
+            { "label": "PR merged",         "done": true },
+            { "label": "In QA & validated", "done": true },
+            { "label": "In Prod",           "done": true }
+          ],
+          "prs": [
+            {
+              "repo": "apidao", "number": 676,
+              "url": "https://github.com/calculi-corp/apidao/pull/676",
+              "state": "merged", "version": null,
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Dual-write to Postgres",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",        "done": true },
+            { "label": "PR merged",         "done": true },
+            { "label": "In QA & validated", "done": true },
+            { "label": "In Prod",           "done": true }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service", "number": 838,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/838",
+              "state": "merged", "version": "0.1.3585",
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Bulk migration",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",             "done": true },
+            { "label": "PR merged",              "done": true },
+            { "label": "Migration run in QA",    "done": true },
+            { "label": "Migration run in Prod",  "done": true }
+          ],
+          "prs": [
+            {
+              "repo": "cass2pg-migrate", "number": 229,
+              "url": "https://github.com/calculi-corp/cass2pg-migrate/pull/229",
+              "state": "merged", "version": null,
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Feature-flag reads from Postgres",
+          "status": "done",
+          "checklist": [
+            { "label": "PR created",           "done": true },
+            { "label": "PR merged",            "done": true },
+            { "label": "Flag enabled in QA",   "done": true },
+            { "label": "Flag enabled in Prod", "done": true }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service", "number": 839,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/839",
+              "state": "merged", "version": "0.1.3621",
+              "deployments": { "qa": true, "prod": true }
+            }
+          ]
+        },
+        {
+          "name": "Remove all Cassandra code",
+          "status": "in_progress",
+          "blockerNote": null,
+          "checklist": [
+            { "label": "PR created",        "done": true  },
+            { "label": "PR merged",         "done": false },
+            { "label": "In QA & validated", "done": false },
+            { "label": "In Prod",           "done": false }
+          ],
+          "prs": [
+            {
+              "repo": "rbac-service", "number": 842,
+              "url": "https://github.com/calculi-corp/rbac-service/pull/842",
+              "state": "open", "version": null,
+              "deployments": { "qa": false, "prod": false }
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "_comment": "Ticket without stages yet — renders using legacy latestUpdate/nextSteps view",
+      "id": "CBP-52013",
+      "title": "Remove Cassandra writes and reads to asset_record_index in asset-service",
+      "url": "https://cloudbees.atlassian.net/browse/CBP-52013",
+      "status": "waiting",
+      "theme": "cass2pg",
+      "services": ["asset-service"],
+      "currentStage": 3,
+      "latestUpdate": "All 3 stage PRs merged — waiting for release 0.0.19262 to be promoted to Prod.",
+      "nextSteps": [
+        "Wait for 0.0.19262 to be promoted to QA and validate",
+        "Wait for 0.0.19262 to be promoted to Prod and validate",
+        "Mark ticket DONE once confirmed in Prod"
+      ],
+      "prs": [
+        { "repo": "asset-service", "number": 1745, "url": "...", "label": "Stage 1", "state": "merged", "version": "0.0.19157" },
+        { "repo": "asset-service", "number": 1760, "url": "...", "label": "Stage 2", "state": "merged", "version": "0.0.19216" },
+        { "repo": "asset-service", "number": 1765, "url": "...", "label": "Stage 3", "state": "merged", "version": "0.0.19262" }
+      ]
+    }
+  ]
+}
