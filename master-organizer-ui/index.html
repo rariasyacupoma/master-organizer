@@ -228,7 +228,7 @@
     .epic-group-none .epic-group-count { color: var(--muted); background: var(--border); }
     .grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 16px;
     }
 
@@ -888,8 +888,7 @@
     .cl-node.blocked { background:var(--bg); border-color:#ef4444; box-shadow:0 0 0 3px #ef444420; }
     .cl-node.waiting { background:var(--bg); border-color:#d97706; box-shadow:0 0 0 3px #d9770620; }
     .cl-node.future  { border-color:#2a2a2a; }
-    .cl-stage-name { flex:1; font-size:0.82rem; font-weight:700; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .cl-stage.open .cl-stage-name { white-space:normal; }
+    .cl-stage-name { flex:1; font-size:0.82rem; font-weight:700; min-width:0; overflow-wrap:break-word; word-break:break-word; }
     .cl-stage-name.done    { color:#2a3a2a; }
     .cl-stage-name.current { color:var(--text); }
     .cl-stage-name.blocked { color:#f87171; }
