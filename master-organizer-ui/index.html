@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Master Organizer</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d0d0d;
+      --surface: #161616;
+      --border: #2a2a2a;
+      --text: #d4d4d4;
+      --muted: #525252;
+      --accent: #22c55e;
+
+      --status-in_progress: #60a5fa;
+      --status-blocked: #f87171;
+      --status-waiting: #fbbf24;
+      --status-new: #34d399;
+
+      --theme-cass2pg: #a78bfa;
+      --theme-security: #f87171;
+      --theme-test-revamp: #22d3ee;
+      --theme-infra: #fb923c;
+    }
+
+    /* ── Single knob: change this to scale all fonts ── */
+    html { font-size: 20px; }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 1rem;
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    header h1 { font-size: 1rem; font-weight: 600; letter-spacing: .05em; color: var(--text); display: flex; align-items: center; gap: 8px; }
+    header h1 img { width: 56px; height: 56px; }
+
+    .stats {
+      display: flex;
+      gap: 16px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+    .stats span { display: flex; align-items: center; gap: 4px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+    .view-toggle {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 3px;
+    }
+    .view-toggle button {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    .view-toggle button.active {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    /* ── Sync button ── */
+    #sync-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    #sync-btn:hover { border-color: var(--accent); color: var(--text); }
+    #sync-btn.syncing { opacity: .6; pointer-events: none; }
+    #sync-btn.success { border-color: #22c55e; color: #22c55e; }
+    #sync-btn.error   { border-color: #ef4444; color: #ef4444; }
+
+    /* ── Main ── */
+    main { padding: 24px; }
+
+    /* ── Status badge ── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .badge.in_progress  { background: #1a2535; color: var(--status-in_progress); }
+    .badge.blocked      { background: #2a1a1a; color: var(--status-blocked); }
+    .badge.waiting      { background: #2a2010; color: var(--status-waiting); }
+    .badge.new          { background: #102a1a; color: var(--status-new); }
+
+    .theme-pip {
+      width: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── PR list ── */
+    .prs-list {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .pr-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+    }
+    .pr-repo {
+      font-size: 0.7rem;
+      color: #52525b;
+      white-space: nowrap;
+      min-width: 0;
+    }
+    .pr-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #9ca3af;
+      text-decoration: none;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: color .15s;
+    }
+    .pr-link:hover { color: var(--text); }
+    .pr-link.merged { color: #6b7280; }
+    .pr-link .check { color: #22c55e; }
+    .pr-link .pending { color: #f59e0b; }
+    .pr-version {
+      font-family: monospace;
+      font-size: 0.65rem;
+      color: #71717a;
+    }
+    .pr-env-tags {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+    .env-tag {
+      font-size: 0.5rem;
+      font-weight: 700;
+      letter-spacing: .05em;
+      padding: 1px 5px;
+      border-radius: 3px;
+      text-transform: uppercase;
+    }
+    .env-tag.on      { }
+    .env-tag.off     { background: transparent; color: #3f3f46; border: 1px solid #27272a; }
+    .env-tag.queued-on  { background: #2a1f0e; color: #fbbf24; border: 1px solid #78350f; }
+    .env-tag.queued-off { background: transparent; color: #3f3f46; border: 1px solid #27272a; }
+    .env-tag.qa-on   { background: #0e2a30; color: #22d3ee; border: 1px solid #164e63; }
+    .env-tag.qa-off  { background: transparent; color: #3f3f46; border: 1px solid #27272a; }
+    .env-tag.prod-on  { background: #1a2e0e; color: #4ade80; border: 1px solid #166534; }
+    .env-tag.prod-off { background: transparent; color: #3f3f46; border: 1px solid #27272a; }
+
+    /* ══════════════════════════════════
+       VIEW A — Grid Cards
+    ══════════════════════════════════ */
+    #view-grid { display: none; }
+    #view-grid.active { display: block; }
+
+    .epic-group { margin-bottom: 28px; }
+    .epic-group-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+    }
+    .epic-group-header a {
+      font-size: 0.9rem;
+      font-weight: 700;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      color: #818cf8;
+      text-decoration: none;
+    }
+    .epic-group-header a:hover { color: #a5b4fc; text-decoration: underline; }
+    .epic-group-chevron {
+      font-size: 0.65rem;
+      color: var(--muted);
+      transition: transform .2s;
+      margin-left: auto;
+    }
+    .epic-group.collapsed .epic-group-chevron { transform: rotate(-90deg); }
+    .epic-group-body { display: block; }
+    .epic-group.collapsed .epic-group-body { display: none; }
+    .epic-group-count {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: #c7d2fe;
+      background: #3730a3;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+    .epic-group-none .epic-group-header a { color: var(--muted); }
+    .epic-group-none .epic-group-count { color: var(--muted); background: var(--border); }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+      transition: border-color .15s;
+    }
+    .card:hover { border-color: #3a3a3a; }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .card-id {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-decoration: none;
+      white-space: nowrap;
+      margin-top: 1px;
+    }
+    .card-id:hover { text-decoration: underline; }
+    .card-title {
+      font-size: 1.05rem;
+      font-weight: 500;
+      color: var(--text);
+      line-height: 1.4;
+    }
+
+    .card-meta {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .service-tag {
+      font-size: 0.9rem;
+      padding: 2px 6px;
+      background: var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+    }
+
+    .stage-label {
+      font-size: 0.9rem;
+      color: var(--muted);
+      margin-left: auto;
+      white-space: nowrap;
+    }
+
+    .latest-update {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .latest-update-title {
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #5eead4;
+      margin-bottom: 5px;
+    }
+    .latest-update p {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.4;
+      margin: 0;
+    }
+
+    .next-steps {
+      border-top: 1px solid var(--border);
+      padding-top: 14px;
+    }
+    .next-steps-title {
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #f0abfc;
+      margin-bottom: 6px;
+    }
+    .next-steps ol {
+      margin: 0;
+      padding-left: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .next-steps li {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      line-height: 1.4;
+    }
+
+    .prs-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+    }
+
+
+    /* ── Toast notifications ── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      z-index: 999;
+    }
+    .toast {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #1e1e2e;
+      border: 1px solid #3730a3;
+      border-radius: 10px;
+      padding: 12px 18px;
+      color: #c7d2fe;
+      font-size: 0.8rem;
+      box-shadow: 0 4px 24px rgba(0,0,0,.5);
+      animation: toast-in .2s ease;
+      max-width: 320px;
+    }
+    .toast-icon { font-size: 1.1rem; flex-shrink: 0; }
+    .toast-body { display: flex; flex-direction: column; gap: 2px; }
+    .toast-title { font-weight: 700; color: #e0e7ff; }
+    .toast-msg   { font-size: 0.7rem; color: #818cf8; }
+    .toast-close {
+      margin-left: auto;
+      background: none;
+      border: none;
+      color: #4f46e5;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 0 0 0 8px;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .toast-close:hover { color: #c7d2fe; }
+    @keyframes toast-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Working indicator ── */
+    .working-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 0.65rem;
+      color: #22c55e;
+      padding: 2px 0;
+    }
+    .working-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #22c55e;
+      flex-shrink: 0;
+      animation: working-pulse 2s ease-in-out infinite;
+    }
+    .working-since {
+      margin-left: auto;
+      font-size: 0.58rem;
+      color: #2a3a2a;
+    }
+    @keyframes working-pulse {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.35; }
+    }
+
+    /* ── Plan button ── */
+    .plan-btn {
+      align-self: flex-start;
+      background: none;
+      border: 1px solid #2a2a2a;
+      color: #52525b;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      transition: all .15s;
+    }
+    .plan-btn:hover { border-color: #52525b; color: #a1a1aa; }
+    .plan-btn.available { border-color: #3f3f46; color: #71717a; }
+    .plan-btn.available:hover { border-color: #a1a1aa; color: #e4e4e7; }
+
+    /* ── Plan overlay ── */
+    #plan-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0d0d0d;
+      z-index: 200;
+      flex-direction: column;
+    }
+    #plan-overlay.visible { display: flex; }
+
+    #plan-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    #plan-back {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    #plan-back:hover { border-color: var(--accent); color: var(--text); }
+    #plan-ticket-id { font-size: 0.8rem; font-weight: 700; color: var(--accent); }
+
+    #plan-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 40px;
+      max-width: 1200px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    #plan-body h1 { font-size: 1.2rem; color: var(--text); margin-bottom: 20px; }
+    #plan-body h2 { font-size: 0.95rem; color: #a1a1aa; margin: 28px 0 10px; padding-bottom: 6px; border-bottom: 1px solid var(--border); }
+    #plan-body h3 { font-size: 0.85rem; color: #71717a; margin: 16px 0 8px; }
+    #plan-body p  { font-size: 0.8rem; color: #71717a; line-height: 1.6; margin-bottom: 10px; }
+    #plan-body ul, #plan-body ol { padding-left: 20px; margin-bottom: 10px; }
+    #plan-body li { font-size: 0.8rem; color: #71717a; line-height: 1.6; }
+    #plan-body strong { color: #a1a1aa; }
+    #plan-body code { background: #1c1c1c; border: 1px solid var(--border); border-radius: 4px; padding: 1px 5px; font-size: 0.75rem; color: #7aa2c8; }
+    #plan-body pre { background: #1c1c1c; border: 1px solid var(--border); border-radius: 8px; padding: 14px; overflow-x: auto; margin-bottom: 12px; }
+    #plan-body pre code { background: none; border: none; padding: 0; }
+    #plan-body hr { border: none; border-top: 1px solid var(--border); margin: 24px 0; }
+
+    .focus-btn {
+      align-self: flex-start;
+      background: #16192a;
+      border: 1px solid #35395a;
+      color: #7880a4;
+      cursor: pointer;
+      padding: 4px 12px;
+      border-radius: 5px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      transition: all .15s;
+    }
+    .focus-btn:hover { background: var(--accent); border-color: var(--accent); color: #0d0d0d; }
+    .focus-btn.ok    { background: #102a1a; border-color: #34d399; color: #34d399; }
+    .focus-btn.err   { background: #2a1a1a; border-color: #f87171; color: #f87171; }
+
+    /* ══════════════════════════════════
+       VIEW B — Compact Table
+    ══════════════════════════════════ */
+    #view-table { display: none; }
+    #view-table.active { display: block; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    thead th {
+      text-align: left;
+      font-size: 0.65rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .1s;
+    }
+    tbody tr:hover { background: var(--surface); }
+    tbody td {
+      padding: 10px 12px;
+      vertical-align: top;
+    }
+    .td-id { white-space: nowrap; }
+    .td-title { max-width: 260px; font-size: 0.75rem; line-height: 1.4; }
+    .td-services { white-space: nowrap; }
+    .td-next { font-size: 0.7rem; color: var(--muted); max-width: 300px; line-height: 1.4; }
+    .td-prs { white-space: nowrap; }
+
+    /* ── Side panel ── */
+    .app-body {
+      display: flex;
+      align-items: flex-start;
+    }
+    .sidepanel {
+      width: 210px;
+      flex-shrink: 0;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      min-height: calc(100vh - 57px);
+      padding: 16px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      transition: width .2s, padding .2s;
+      overflow: hidden;
+    }
+    .sidepanel.collapsed {
+      width: 36px;
+      padding: 16px 6px;
+    }
+    .sidepanel.collapsed .panel-content { display: none; }
+
+    .sidebar-toggle {
+      background: none;
+      border: none;
+      color: #6b7280;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 2px 4px;
+      align-self: flex-end;
+      transition: color .15s;
+      flex-shrink: 0;
+    }
+    .sidebar-toggle:hover { color: var(--text); }
+
+    .panel-section-title {
+      font-size: 0.55rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      color: #6b7280;
+      padding-bottom: 6px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 4px;
+    }
+    .panel-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #71717a;
+      cursor: pointer;
+      padding: 6px 8px;
+      border-radius: 6px;
+      font-size: 0.65rem;
+      font-weight: 500;
+      transition: all .15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .panel-btn:hover  { background: var(--border); color: #d4d4d8; }
+    .panel-btn.ok     { color: #6ee7b7; background: #052e1c; }
+    .panel-btn.err    { color: #fca5a5; background: #2d1515; }
+    .panel-btn.busy   { opacity: .5; pointer-events: none; }
+
+    /* db env color hints */
+    .panel-btn[data-env="local"]      { color: #52525b; }
+    .panel-btn[data-env="staging"]    { color: #78716c; }
+    .panel-btn[data-env="production"] { color: #854d4d; }
+    .panel-btn[data-env="preprod"]    { color: #7c6f52; }
+    .panel-btn[data-env="qa"]         { color: #5f6b7a; }
+    .panel-btn[data-env="local"]:hover,
+    .panel-btn[data-env="staging"]:hover,
+    .panel-btn[data-env="production"]:hover,
+    .panel-btn[data-env="preprod"]:hover,
+    .panel-btn[data-env="qa"]:hover   { color: #d4d4d8; }
+
+    /* ── Deployments button ── */
+    #deploy-view-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    #deploy-view-btn:hover { border-color: #f59e0b; color: #f59e0b; }
+
+    /* ── Deployments overlay ── */
+    #deploy-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: #0d0d0d;
+      z-index: 200;
+      flex-direction: column;
+    }
+    #deploy-overlay.visible { display: flex; }
+
+    #deploy-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    #deploy-back {
+      background: none;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      cursor: pointer;
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    #deploy-back:hover { border-color: #f59e0b; color: var(--text); }
+    #deploy-title { font-size: 0.85rem; font-weight: 700; color: var(--text); }
+    #deploy-updated { font-size: 0.6rem; color: var(--muted); margin-left: auto; }
+
+    #deploy-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 40px;
+    }
+
+    .deploy-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .deploy-env-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .deploy-env-header {
+      padding: 12px 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .1em;
+      border-bottom: 1px solid var(--border);
+    }
+    .deploy-env-header.qa   { color: #22d3ee; border-top: 2px solid #22d3ee; }
+    .deploy-env-header.prod { color: #f59e0b; border-top: 2px solid #f59e0b; }
+
+    .deploy-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .deploy-table th {
+      text-align: left;
+      font-size: 0.55rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      color: var(--muted);
+      padding: 8px 20px;
+      border-bottom: 1px solid var(--border);
+    }
+    .deploy-table td {
+      padding: 7px 20px;
+      font-size: 0.7rem;
+      border-bottom: 1px solid #1a1a1a;
+      vertical-align: middle;
+    }
+    .deploy-table tr:last-child td { border-bottom: none; }
+    .deploy-table tr:hover td { background: #1a1a1a; }
+
+    .deploy-service { color: var(--text); font-weight: 500; }
+    .deploy-version { color: #a1a1aa; font-family: monospace; font-size: 0.65rem; }
+    .deploy-date    { color: var(--muted); font-size: 0.6rem; white-space: nowrap; }
+
+    /* diff highlights */
+    .deploy-version.ahead  { color: #4ade80; }
+    .deploy-version.behind { color: #f87171; }
+    .deploy-version.only   { color: #94a3b8; font-style: italic; }
+
+    /* diff legend */
+    .deploy-legend {
+      display: flex;
+      gap: 20px;
+      margin: 0 auto 20px;
+      max-width: 1400px;
+      font-size: 0.6rem;
+    }
+    .deploy-legend span { display: flex; align-items: center; gap: 5px; color: var(--muted); }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+    /* ── Tilt sidebar section ── */
+    .tilt-active-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: 6px;
+      background: #0f1f1a;
+      border: 1px solid #1a3a2a;
+      margin-bottom: 6px;
+    }
+    .tilt-active-id {
+      font-size: 0.6rem;
+      font-weight: 700;
+      color: #34d399;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tilt-switching {
+      font-size: 0.55rem;
+      color: #fbbf24;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+    .tilt-main-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: 1px solid var(--border);
+      color: #6b7280;
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.6rem;
+      font-weight: 600;
+      transition: all .15s;
+      margin-bottom: 4px;
+    }
+    .tilt-main-btn:hover { border-color: #34d399; color: #34d399; }
+    .tilt-main-btn.active { border-color: #34d399; color: #34d399; background: #0f1f1a; }
+
+    .watcher-row {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 0;
+    }
+    .watcher-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .watcher-dot.on  { background: #34d399; }
+    .watcher-dot.off { background: #52525b; }
+    .watcher-label {
+      font-size: 0.55rem;
+      color: #52525b;
+      flex: 1;
+    }
+    .watcher-btn {
+      background: none;
+      border: 1px solid var(--border);
+      color: #52525b;
+      cursor: pointer;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 0.5rem;
+      font-weight: 600;
+      transition: all .15s;
+    }
+    .watcher-btn:hover { border-color: #6b7280; color: #a1a1aa; }
+
+    .tilt-ticket-btn {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      color: #52525b;
+      cursor: pointer;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 0.6rem;
+      font-weight: 500;
+      transition: all .15s;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .tilt-ticket-btn:hover  { background: var(--border); color: #a1a1aa; }
+    .tilt-ticket-btn.active { color: #34d399; background: #0f1f1a; font-weight: 700; }
+    .tilt-ticket-btn.busy   { opacity: .5; pointer-events: none; }
+
+    /* ── Deploy button on cards ── */
+    .deploy-btn {
+      align-self: flex-start;
+      background: #0f1a12;
+      border: 1px solid #1e3a28;
+      color: #4b7a5e;
+      cursor: pointer;
+      padding: 4px 10px;
+      border-radius: 5px;
+      font-size: 0.65rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      transition: all .15s;
+    }
+    .deploy-btn:hover  { background: #162a1e; border-color: #34d399; color: #34d399; }
+    .deploy-btn.active { background: #0f1f1a; border-color: #34d399; color: #34d399; }
+    .deploy-btn.busy   { opacity: .5; pointer-events: none; }
+    .deploy-btn.ok     { background: #0f1f1a; border-color: #34d399; color: #34d399; }
+    .deploy-btn.err    { background: #2a1a1a; border-color: #f87171; color: #f87171; }
+
+    /* active card gets a green left border highlight */
+    .card.tilt-active { border-color: #1a3a2a; box-shadow: inset 3px 0 0 #34d399; }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1><img src="logo-holo-b.svg" alt=""/>MASTER ORGANIZER</h1>
+  <div class="stats" id="stats"></div>
+  <div style="display:flex;align-items:center;gap:12px">
+    <button id="sync-btn" onclick="syncPRs()">⟳ Sync PRs</button>
+    <button onclick="notifyDone('CBP-52015')" style="background:none;border:1px solid var(--border);color:var(--muted);cursor:pointer;padding:5px 10px;border-radius:6px;font-size:0.65rem;font-weight:500;transition:all .15s" onmouseover="this.style.borderColor='#818cf8';this.style.color='#818cf8'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">🔔 test notify</button>
+    <button id="deploy-view-btn" onclick="openDeployments()">⬡ Deployments</button>
+    <div class="view-toggle">
+      <button onclick="setView('grid')" id="btn-grid" class="active">Grid</button>
+      <button onclick="setView('table')" id="btn-table">Table</button>
+    </div>
+  </div>
+</header>
+
+<div class="app-body">
+  <aside class="sidepanel collapsed" id="sidepanel">
+    <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle" title="Toggle sidebar">▶</button>
+    <div class="panel-content">
+      <div style="padding-bottom:12px">
+        <div class="panel-section-title">⚡ Tilt</div>
+        <div id="tilt-section"></div>
+      </div>
+      <div style="padding-bottom:12px">
+        <div class="panel-section-title">🖥 Sessions</div>
+        <div id="session-list"></div>
+      </div>
+      <div style="padding-bottom:12px">
+        <div class="panel-section-title">🗄 Databases</div>
+        <div id="db-list"></div>
+      </div>
+    </div>
+  </aside>
+  <main style="padding:24px;flex:1;min-width:0">
+    <div id="view-grid" class="active"></div>
+    <div id="view-table"></div>
+  </main>
+</div>
+
+<div id="toast-container"></div>
+
+<div id="deploy-overlay">
+  <div id="deploy-header">
+    <button id="deploy-back" onclick="closeDeployments()">← Back</button>
+    <span id="deploy-title">Deployments</span>
+    <span id="deploy-updated"></span>
+  </div>
+  <div id="deploy-body"></div>
+</div>
+
+<div id="plan-overlay">
+  <div id="plan-header">
+    <button id="plan-back" onclick="closePlan()">← Back</button>
+    <span id="plan-ticket-id"></span>
+  </div>
+  <div id="plan-body"></div>
+</div>
+
+<script>
+const STATUS_LABEL = { in_progress: 'In Progress', blocked: 'Blocked', waiting: 'Waiting', new: 'New' };
+const EPIC_ICON = `<svg width="26" height="26" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" style="display:inline-block;vertical-align:middle;flex-shrink:0"><rect width="16" height="16" rx="3" fill="#7c3aed"/><path d="M9.5 2.5 L5 8.5 H8.5 L6.5 13.5 L12 7 H8.5 Z" fill="white"/></svg>`;
+const STATUS_EMOJI = { in_progress: '🔄', blocked: '🚫', waiting: '⏳', new: '🆕' };
+const THEME_COLOR = { cass2pg: '#8b5cf6', security: '#ef4444', 'test-revamp': '#06b6d4', infra: '#f59e0b' };
+
+function badge(status) {
+  if (status === 'in_progress' || status === 'new') return '';
+  return `<span class="badge ${status}">${STATUS_EMOJI[status]} ${STATUS_LABEL[status]}</span>`;
+}
+
+let _deployments = { qa: {}, prod: {} };
+let _versioning = {};
+let _epics = [];
+
+async function loadDeployments() {
+  try {
+    const [depRes, verRes, epicRes] = await Promise.all([fetch('/deployments'), fetch('/versioning'), fetch('/epics')]);
+    _deployments = await depRes.json();
+    _epics = await epicRes.json();
+    _versioning  = await verRes.json();
+  } catch {}
+}
+
+function prChip(pr) {
+  const icons = { merged: `<span class="check">✓</span>`, closed: `<span style="color:#ef4444">✕</span>`, open: `<span class="pending">●</span>` };
+  const icon = icons[pr.state] || icons.open;
+  const linkCls = pr.state === 'merged' ? 'merged' : '';
+
+  let versionPart = '';
+  let envTags = '';
+  if (pr.state === 'merged' && pr.version) {
+    const svc = pr.repo;
+    const qaVer      = _deployments.qa[svc]?.version;
+    const prodVer    = _deployments.prod[svc]?.version;
+    const queuedVer  = _versioning[svc];
+    const inQA      = qaVer     && _versionGte(qaVer,     pr.version);
+    const inProd    = prodVer   && _versionGte(prodVer,   pr.version);
+    const inQueue   = queuedVer && _versionGte(queuedVer, pr.version);
+
+    // Higher env takes precedence: Prod implies QA implies Queued
+    const showProd   = inProd;
+    const showQA     = inQA   && !inProd;
+    const showQueued = inQueue && !inQA && !inProd;
+
+    versionPart = `<span class="pr-version">v${pr.version}</span>`;
+    envTags = `<span class="pr-env-tags">
+      <span class="env-tag ${showQueued ? 'queued-on' : 'queued-off'}" title="${inQueue ? `Queued for QA (${queuedVer})` : `Not queued${queuedVer ? ` (queued: ${queuedVer})` : ''}`}">Queued</span>
+      <span class="env-tag ${showQA     ? 'qa-on'     : 'qa-off'}"     title="${inQA   ? `In QA (${qaVer})`              : `Not in QA${qaVer     ? ` (QA: ${qaVer})`         : ''}`}">QA</span>
+      <span class="env-tag ${showProd   ? 'prod-on'   : 'prod-off'}"   title="${inProd ? `In Prod (${prodVer})`          : `Not in Prod${prodVer ? ` (Prod: ${prodVer})`     : ''}`}">Prod</span>
+    </span>`;
+  }
+
+  const repoShort = pr.repo.length > 18 ? pr.repo.slice(0, 17) + '…' : pr.repo;
+  return `<div class="pr-row">
+    <span class="pr-repo" title="${pr.repo}">${repoShort}</span>
+    <a class="pr-link ${linkCls}" href="${pr.url}" target="_blank">${icon} #${pr.number}</a>
+    ${versionPart}
+    ${envTags}
+  </div>`;
+}
+
+function _versionGte(a, b) {
+  const parts = s => s.replace(/[^0-9.]/g, '').split('.').map(Number);
+  const ap = parts(a), bp = parts(b);
+  for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+    const d = (ap[i] || 0) - (bp[i] || 0);
+    if (d > 0) return true;
+    if (d < 0) return false;
+  }
+  return true; // equal
+}
+
+async function viewPlan(ticketId) {
+  const res = await fetch(`/implementation-plan/${ticketId}`);
+  const data = await res.json();
+  if (!data.ok) return;
+  document.getElementById('plan-ticket-id').textContent = ticketId;
+  document.getElementById('plan-body').innerHTML = marked.parse(data.content);
+  document.getElementById('plan-overlay').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+  history.pushState({ plan: ticketId }, '', `#plan-${ticketId}`);
+}
+
+function closePlan() {
+  document.getElementById('plan-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+  if (location.hash.startsWith('#plan-')) history.pushState({}, '', '/');
+}
+
+window.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  if (document.getElementById('plan-overlay').classList.contains('visible')) history.back();
+  if (document.getElementById('deploy-overlay').classList.contains('visible')) history.back();
+});
+
+window.addEventListener('popstate', e => {
+  if (document.getElementById('plan-overlay').classList.contains('visible')) {
+    document.getElementById('plan-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+  if (document.getElementById('deploy-overlay').classList.contains('visible')) {
+    document.getElementById('deploy-overlay').classList.remove('visible');
+    document.body.style.overflow = '';
+  }
+});
+
+async function checkPlanAvailability(ticketId) {
+  try {
+    const res = await fetch(`/implementation-plan/${ticketId}`);
+    const data = await res.json();
+    const slot = document.getElementById(`plan-btn-${ticketId}`);
+    if (slot && data.ok) {
+      slot.innerHTML = `<button class="plan-btn available" onclick="viewPlan('${ticketId}')">📋 plan</button>`;
+    }
+  } catch {}
+}
+
+function toggleSidebar() {
+  const panel = document.getElementById('sidepanel');
+  const btn = document.getElementById('sidebar-toggle');
+  const collapsed = panel.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶' : '◀';
+  btn.title = collapsed ? 'Expand sidebar' : 'Collapse sidebar';
+}
+
+const DB_ALIASES = [
+  { alias: "db-uds-local",        label: "UDS local",         env: "local" },
+  { alias: "db-uds-staging",      label: "UDS staging",       env: "staging" },
+  { alias: "db-uds-production",   label: "UDS production",    env: "production" },
+  { alias: "db-ss-local",         label: "SS local",          env: "local" },
+  { alias: "db-ss-staging",       label: "SS staging",        env: "staging" },
+  { alias: "db-license-local",    label: "License local",     env: "local" },
+  { alias: "db-license-staging",  label: "License staging",   env: "staging" },
+  { alias: "db-keycloak-local",   label: "Keycloak local",    env: "local" },
+  { alias: "db-keycloak-preprod", label: "Keycloak preprod",  env: "preprod" },
+  { alias: "db-platform-local",   label: "Platform local",    env: "local" },
+  { alias: "db-platform-preprod", label: "Platform preprod",  env: "preprod" },
+  { alias: "db-platform-qa",      label: "Platform QA",       env: "qa" },
+];
+
+const PF_ALIASES = [
+  { alias: "portforward-platform-preprod",      label: "Platform preprod",    env: "preprod" },
+  { alias: "portforward-iam-legacy-staging",    label: "IAM legacy staging",  env: "staging" },
+  { alias: "portforward-iam-legacy-production", label: "IAM legacy prod",     env: "production" },
+];
+
+function renderDbs() {
+  const dbBtns = DB_ALIASES.map(d =>
+    `<button class="panel-btn" data-env="${d.env}" onclick="openDb('${d.alias}', this)">🗄 ${d.label}</button>`
+  ).join('');
+  const pfBtns = PF_ALIASES.map(d =>
+    `<button class="panel-btn" data-env="${d.env}" onclick="openDb('${d.alias}', this)">⇄ ${d.label}</button>`
+  ).join('');
+  document.getElementById('db-list').innerHTML =
+    dbBtns +
+    `<div style="font-size:0.5rem;font-weight:700;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding:10px 0 6px;border-top:1px solid var(--border);margin-top:6px">Port forwards</div>` +
+    pfBtns;
+}
+
+async function openDb(alias, btn) {
+  const orig = btn.textContent;
+  btn.textContent = '⌛ connecting…';
+  btn.className = 'panel-btn busy';
+  try {
+    const res = await fetch('/open-db', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ alias })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ opened';
+      btn.className = 'panel-btn ok';
+    } else {
+      btn.textContent = '✕ failed';
+      btn.className = 'panel-btn err';
+      console.warn(data.output);
+    }
+  } catch (e) {
+    btn.textContent = '✕ error';
+    btn.className = 'panel-btn err';
+  }
+  setTimeout(() => { btn.textContent = orig; btn.className = `panel-btn`; btn.dataset.env = btn.dataset.env; }, 3000);
+}
+
+async function loadSessions() {
+  const res = await fetch('/persistent-sessions');
+  const sessions = await res.json();
+  const el = document.getElementById('session-list');
+  el.innerHTML = sessions.map(s => `
+    <button class="panel-btn" onclick="focusSession('${s.name}', this)" title="${s.workingDir}">🖥 ${s.name}</button>
+  `).join('');
+}
+
+async function focusSession(name, btn) {
+  const orig = btn.textContent;
+  btn.textContent = '⌛ focusing…';
+  btn.className = 'panel-btn busy';
+  try {
+    const res = await fetch('/focus-tab', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId: name })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ focused';
+      btn.className = 'panel-btn ok';
+    } else {
+      btn.textContent = '✕ not found';
+      btn.className = 'panel-btn err';
+      console.warn(data.output);
+    }
+  } catch (e) {
+    btn.textContent = '✕ error';
+    btn.className = 'panel-btn err';
+  }
+  setTimeout(() => { btn.textContent = orig; btn.className = 'panel-btn'; }, 3000);
+}
+
+async function focusTab(ticketId, btn) {
+  btn.textContent = '⌛';
+  btn.className = 'focus-btn';
+  try {
+    const res = await fetch('/focus-tab', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ focused';
+      btn.className = 'focus-btn ok';
+    } else {
+      btn.textContent = '✕ not found';
+      btn.className = 'focus-btn err';
+      console.warn(data.output);
+    }
+  } catch (e) {
+    btn.textContent = '✕ error';
+    btn.className = 'focus-btn err';
+  }
+  setTimeout(() => { btn.textContent = '🖥 terminal'; btn.className = 'focus-btn'; }, 3000);
+}
+
+async function syncPRs() {
+  const btn = document.getElementById('sync-btn');
+  btn.textContent = '⟳ Syncing…';
+  btn.className = 'syncing';
+  try {
+    const res = await fetch('/sync-prs', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      btn.textContent = '✓ Synced';
+      btn.className = 'success';
+      setTimeout(() => { btn.textContent = '⟳ Sync PRs'; btn.className = ''; }, 3000);
+      await load();
+    } else {
+      btn.textContent = '✕ Failed';
+      btn.className = 'error';
+      console.error(data.output);
+      setTimeout(() => { btn.textContent = '⟳ Sync PRs'; btn.className = ''; }, 4000);
+    }
+  } catch (e) {
+    btn.textContent = '✕ Error';
+    btn.className = 'error';
+    setTimeout(() => { btn.textContent = '⟳ Sync PRs'; btn.className = ''; }, 4000);
+  }
+}
+
+function serviceTag(s) {
+  return `<span class="service-tag">${s}</span>`;
+}
+
+let _lastTickets = [];
+
+async function load() {
+  const res = await fetch('/master-organizer.json');
+  const { tickets } = await res.json();
+  _lastTickets = tickets;
+
+  // Stats
+  const counts = tickets.reduce((a, t) => { a[t.status] = (a[t.status] || 0) + 1; return a; }, {});
+  const statsEl = document.getElementById('stats');
+  statsEl.innerHTML = Object.entries(counts).map(([s, n]) =>
+    `<span><span class="dot" style="background:var(--status-${s})"></span>${n} ${STATUS_LABEL[s]}</span>`
+  ).join('');
+
+  renderGrid(tickets);
+  renderTable(tickets);
+  tickets.forEach(t => checkPlanAvailability(t.id));
+  applyTiltCardHighlights();
+  applyWorkingBadges();
+}
+
+function cardHtml(t) {
+  return `<div class="card">
+      <div class="card-header">
+        <div class="theme-pip" style="background:${THEME_COLOR[t.theme]};align-self:stretch"></div>
+        <div style="flex:1;display:flex;flex-direction:column;gap:6px">
+          <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
+            <a class="card-id" href="${t.url}" target="_blank">${t.id}</a>
+            ${badge(t.status)}
+          </div>
+          <div id="working-badge-${t.id}"></div>
+          <div class="card-title">${t.title}</div>
+        </div>
+      </div>
+      <div class="card-meta">
+        ${t.services.map(serviceTag).join('')}
+        <span class="stage-label">Stage ${t.currentStage}</span>
+      </div>
+      ${t.latestUpdate ? `
+        <div class="latest-update">
+          <div class="latest-update-title">◎ Latest update</div>
+          <p>${t.latestUpdate}</p>
+        </div>` : ''}
+      ${t.nextSteps && t.nextSteps.length ? `
+        <div class="next-steps">
+          <div class="next-steps-title">▶ Next steps</div>
+          <ol>${t.nextSteps.map(s => `<li>${s}</li>`).join('')}</ol>
+        </div>` : ''}
+      ${t.prs.length ? `<div class="prs-list" style="border-top:1px solid var(--border);padding-top:14px">${t.prs.map(prChip).join('')}</div>` : ''}
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:auto;gap:6px;padding-top:10px;border-top:1px solid var(--border)">
+        <span id="plan-btn-${t.id}"></span>
+        <div style="display:flex;gap:6px;margin-left:auto">
+          <span id="deploy-btn-${t.id}"></span>
+          <button class="focus-btn" onclick="focusTab('${t.id}', this)">🖥 terminal</button>
+        </div>
+      </div>
+    </div>`;
+}
+
+function renderGrid(tickets) {
+  const el = document.getElementById('view-grid');
+  // Group tickets by epic
+  const groups = [];
+  const seen = new Set();
+  // First pass: epics with known metadata, in order
+  for (const epic of _epics) {
+    const group = tickets.filter(t => t.epic === epic.id);
+    if (group.length) {
+      groups.push({ epic, tickets: group });
+      seen.add(epic.id);
+    }
+  }
+  // Second pass: tickets with an epic ID not in .epics.json (unknown epic)
+  const unknownEpics = [...new Set(tickets.filter(t => t.epic && !seen.has(t.epic)).map(t => t.epic))];
+  for (const epicId of unknownEpics) {
+    groups.push({ epic: { id: epicId, title: epicId, url: null }, tickets: tickets.filter(t => t.epic === epicId) });
+  }
+  // Last: tickets with no epic
+  const noEpic = tickets.filter(t => !t.epic);
+  if (noEpic.length) groups.push({ epic: null, tickets: noEpic });
+
+  el.innerHTML = groups.map(({ epic, tickets: group }) => {
+    const header = epic
+      ? `<div class="epic-group-header" onclick="toggleEpicGroup(this)">
+           ${EPIC_ICON}
+           ${epic.url ? `<a href="${epic.url}" target="_blank" onclick="event.stopPropagation()">${epic.title}</a>` : `<span style="color:#818cf8;font-weight:700;font-size:0.9rem;letter-spacing:.06em;text-transform:uppercase">${epic.title}</span>`}
+           <span class="epic-group-count">${group.length}</span>
+           <span class="epic-group-chevron">▼</span>
+         </div>`
+      : `<div class="epic-group-header" onclick="toggleEpicGroup(this)"><a href="#" onclick="return false" style="color:var(--muted)">No epic</a><span class="epic-group-count">${group.length}</span><span class="epic-group-chevron">▼</span></div>`;
+    return `<div class="epic-group${epic ? '' : ' epic-group-none'}">
+      ${header}
+      <div class="epic-group-body"><div class="grid">${group.map(cardHtml).join('')}</div></div>
+    </div>`;
+  }).join('');
+}
+
+async function openDeployments() {
+  document.getElementById('deploy-overlay').classList.add('visible');
+  document.body.style.overflow = 'hidden';
+  history.pushState({ deployments: true }, '', '#deployments');
+  await renderDeployments();
+}
+
+function closeDeployments() {
+  document.getElementById('deploy-overlay').classList.remove('visible');
+  document.body.style.overflow = '';
+  if (location.hash === '#deployments') history.pushState({}, '', '/');
+}
+
+async function renderDeployments() {
+  const body = document.getElementById('deploy-body');
+  body.innerHTML = '<div style="color:var(--muted);font-size:0.75rem;padding:20px">Loading…</div>';
+  const res = await fetch('/deployments');
+  const { qa, prod } = await res.json();
+
+  // Build unified service list (union of both envs), sorted alphabetically
+  const allServices = [...new Set([...Object.keys(qa), ...Object.keys(prod)])].sort();
+
+  function versionClass(env, other) {
+    if (!env) return 'only';
+    if (!other) return '';
+    const newer = [env.version, other.version].sort((a, b) => {
+      const parts = s => s.replace(/[^0-9.]/g, '').split('.').map(Number);
+      const ap = parts(a), bp = parts(b);
+      for (let i = 0; i < Math.max(ap.length, bp.length); i++) {
+        const d = (ap[i] || 0) - (bp[i] || 0);
+        if (d !== 0) return d;
+      }
+      return 0;
+    }).pop();
+    if (env.version === newer && env.version !== other.version) return 'ahead';
+    if (env.version !== newer) return 'behind';
+    return '';
+  }
+
+  function envTable(data, otherData, envName) {
+    const rows = allServices.map(svc => {
+      const entry = data[svc];
+      const other = otherData[svc];
+      if (!entry) return `
+        <tr>
+          <td class="deploy-service" style="color:var(--muted)">${svc}</td>
+          <td class="deploy-version only">— not deployed</td>
+          <td class="deploy-date"></td>
+        </tr>`;
+      const cls = versionClass(entry, other);
+      return `
+        <tr>
+          <td class="deploy-service">${svc}</td>
+          <td class="deploy-version ${cls}">${entry.version}</td>
+          <td class="deploy-date">${entry.deployedAt || ''}</td>
+        </tr>`;
+    }).join('');
+
+    return `
+      <div class="deploy-env-card">
+        <div class="deploy-env-header ${envName}">${envName.toUpperCase()} — ${Object.keys(data).length} services</div>
+        <table class="deploy-table">
+          <thead><tr><th>Service</th><th>Version</th><th>Deployed</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  const aheadCount = allServices.filter(s => qa[s] && prod[s] && versionClass(qa[s], prod[s]) === 'ahead').length;
+  document.getElementById('deploy-updated').textContent =
+    `${allServices.length} services · ${aheadCount} ahead in QA`;
+
+  body.innerHTML = `
+    <div class="deploy-legend">
+      <span><span class="legend-dot" style="background:#4ade80"></span>Ahead of other env</span>
+      <span><span class="legend-dot" style="background:#f87171"></span>Behind other env</span>
+      <span><span class="legend-dot" style="background:#94a3b8"></span>Not deployed in this env</span>
+    </div>
+    <div class="deploy-grid">
+      ${envTable(qa, prod, 'qa')}
+      ${envTable(prod, qa, 'prod')}
+    </div>`;
+}
+
+function renderTable(tickets) {
+  const el = document.getElementById('view-table');
+  const thead = `<thead><tr>
+    <th>Ticket</th><th>Title</th><th>Status</th>
+    <th>Services</th><th>Stage</th><th>Next Action</th><th>PRs</th>
+  </tr></thead>`;
+
+  function rowsHtml(group) {
+    return group.map(t => `
+      <tr>
+        <td class="td-id"><a class="card-id" href="${t.url}" target="_blank">${t.id}</a></td>
+        <td class="td-title">${t.title}</td>
+        <td>${badge(t.status)}</td>
+        <td class="td-services">${t.services.map(serviceTag).join('<br>')}</td>
+        <td style="color:var(--muted);text-align:center">${t.currentStage}</td>
+        <td class="td-next">${t.nextAction}</td>
+        <td class="td-prs"><div class="prs-list">${t.prs.map(prChip).join('')}</div></td>
+      </tr>`).join('');
+  }
+
+  // Build same group order as renderGrid
+  const groups = [];
+  const seen = new Set();
+  for (const epic of _epics) {
+    const group = tickets.filter(t => t.epic === epic.id);
+    if (group.length) { groups.push({ epic, tickets: group }); seen.add(epic.id); }
+  }
+  const unknownEpics = [...new Set(tickets.filter(t => t.epic && !seen.has(t.epic)).map(t => t.epic))];
+  for (const epicId of unknownEpics) {
+    groups.push({ epic: { id: epicId, title: epicId, url: null }, tickets: tickets.filter(t => t.epic === epicId) });
+  }
+  const noEpic = tickets.filter(t => !t.epic);
+  if (noEpic.length) groups.push({ epic: null, tickets: noEpic });
+
+  el.innerHTML = groups.map(({ epic, tickets: group }) => {
+    const label = epic
+      ? `${EPIC_ICON} ` + (epic.url ? `<a href="${epic.url}" target="_blank" onclick="event.stopPropagation()" style="color:#818cf8;text-decoration:none;font-weight:700;font-size:0.9rem;letter-spacing:.06em;text-transform:uppercase">${epic.title}</a>` : `<span style="color:#818cf8;font-weight:700;font-size:0.9rem;text-transform:uppercase">${epic.title}</span>`)
+      : `<span style="color:var(--muted);font-size:0.9rem;text-transform:uppercase">No epic</span>`;
+    return `
+      <div class="epic-group${epic ? '' : ' epic-group-none'}" style="margin-bottom:24px">
+        <div class="epic-group-header" onclick="toggleEpicGroup(this)">${label}<span class="epic-group-count">${group.length}</span><span class="epic-group-chevron">▼</span></div>
+        <div class="epic-group-body"><table>${thead}<tbody>${rowsHtml(group)}</tbody></table></div>
+      </div>`;
+  }).join('');
+}
+
+function toggleEpicGroup(header) {
+  header.closest('.epic-group').classList.toggle('collapsed');
+}
+
+function setView(name) {
+  ['grid','table'].forEach(v => {
+    document.getElementById('view-' + v).classList.toggle('active', v === name);
+    document.getElementById('btn-' + v).classList.toggle('active', v === name);
+  });
+}
+
+// ── Working status polling ──────────────────────────────────────────────
+
+let _workingStatus = {};
+
+async function pollWorkingStatus() {
+  let fresh = {};
+  try {
+    const res = await fetch('/working-status');
+    fresh = await res.json();
+  } catch { return; }
+
+  // Detect tickets that just flipped from working → not working
+  for (const ticketId of Object.keys(_workingStatus)) {
+    if (_workingStatus[ticketId] && !fresh[ticketId]) {
+      notifyDone(ticketId);
+    }
+  }
+
+  _workingStatus = fresh;
+  applyWorkingBadges();
+}
+
+function applyWorkingBadges() {
+  document.querySelectorAll('[id^="working-badge-"]').forEach(el => {
+    const ticketId = el.id.replace('working-badge-', '');
+    if (_workingStatus[ticketId]) {
+      const now = new Date();
+      const h = now.getHours().toString().padStart(2, '0');
+      const m = now.getMinutes().toString().padStart(2, '0');
+      el.innerHTML = `<div class="working-row">
+        <div class="working-dot"></div>
+        <span>Active session open</span>
+        <span class="working-since">since ${h}:${m}</span>
+      </div>`;
+    } else {
+      el.innerHTML = '';
+    }
+  });
+}
+
+function notifyDone(ticketId) {
+  const ticketData = _lastTickets?.find(t => t.id === ticketId);
+  const title = `${ticketId} finished`;
+  const body  = ticketData ? ticketData.title : 'Claude session has finished working.';
+
+  // In-page toast (always shows)
+  showToast(ticketId, body);
+
+  // macOS desktop notification via server osascript
+  fetch('/notify', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title, message: body })
+  }).catch(() => {});
+}
+
+function showToast(ticketId, msg) {
+  const container = document.getElementById('toast-container');
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.innerHTML = `
+    <span class="toast-icon">✓</span>
+    <div class="toast-body">
+      <span class="toast-title">${ticketId} finished</span>
+      <span class="toast-msg">${msg}</span>
+    </div>
+    <button class="toast-close" onclick="this.closest('.toast').remove()">✕</button>`;
+  container.appendChild(toast);
+  setTimeout(() => toast.remove(), 15000);
+}
+
+// Request notification permission early and start polling
+if (Notification.permission === 'default') Notification.requestPermission();
+pollWorkingStatus();
+setInterval(pollWorkingStatus, 20000);
+
+// ── Tilt / ticket-switcher ──────────────────────────────────────────────
+
+let _tiltStatus = { active: 'MAIN', switching: false, watcherRunning: false, switchable: [] };
+let _tiltPollTimer = null;
+
+async function loadTilt() {
+  try {
+    const res = await fetch('/tilt-status');
+    _tiltStatus = await res.json();
+  } catch { return; }
+  renderTiltSection();
+  applyTiltCardHighlights();
+}
+
+function renderTiltSection() {
+  const { active, switching, watcherRunning, switchable } = _tiltStatus;
+  const isMain = active === 'MAIN';
+
+  const activeRow = `
+    <div class="tilt-active-row">
+      <span class="tilt-active-id">${switching ? '⏳' : '⚡'} ${active}</span>
+      ${switching ? '<span class="tilt-switching">switching…</span>' : ''}
+    </div>`;
+
+  const mainBtn = `<button class="tilt-main-btn ${isMain ? 'active' : ''}" onclick="switchTicket('MAIN', this)">
+    ↩ MAIN${isMain ? ' ✓' : ''}
+  </button>`;
+
+  const watcherRow = `
+    <div class="watcher-row">
+      <span class="watcher-dot ${watcherRunning ? 'on' : 'off'}"></span>
+      <span class="watcher-label">watcher ${watcherRunning ? 'on' : 'off'}</span>
+      <button class="watcher-btn" onclick="toggleWatcher(this)">${watcherRunning ? 'stop' : 'start'}</button>
+    </div>`;
+
+  const ticketBtns = switchable.map(t => {
+    const isActive = t.id === active;
+    return `<button class="tilt-ticket-btn ${isActive ? 'active' : ''}" onclick="switchTicket('${t.id}', this)" title="${t.title || t.id}">${isActive ? '▶ ' : ''}${t.id}</button>`;
+  }).join('');
+
+  const tiltExpanded = window._tiltTicketsExpanded || false;
+  const ticketList = switchable.length ? `
+    <button onclick="toggleTiltTickets(this)" style="display:flex;align-items:center;gap:5px;width:100%;background:none;border:none;color:#52525b;cursor:pointer;padding:4px 8px;border-radius:4px;font-size:0.55rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;transition:color .15s" onmouseover="this.style.color='#a1a1aa'" onmouseout="this.style.color='#52525b'">
+      <span id="tilt-tickets-arrow">${tiltExpanded ? '▾' : '▸'}</span> tickets (${switchable.length})
+    </button>
+    <div id="tilt-tickets-list" style="display:${tiltExpanded ? 'block' : 'none'};margin-top:2px">${ticketBtns}</div>
+  ` : '';
+
+  document.getElementById('tilt-section').innerHTML =
+    activeRow + mainBtn + watcherRow + ticketList;
+
+  // If currently switching, poll every 2s until done
+  if (switching) {
+    clearTimeout(_tiltPollTimer);
+    _tiltPollTimer = setTimeout(loadTilt, 2000);
+  }
+}
+
+function applyTiltCardHighlights() {
+  const { active, switchable } = _tiltStatus;
+  // Inject/update deploy buttons into card placeholders
+  switchable.forEach(t => {
+    const slot = document.getElementById(`deploy-btn-${t.id}`);
+    if (!slot) return;
+    const isActive = t.id === active;
+    slot.innerHTML = `<button class="deploy-btn ${isActive ? 'active' : ''}" onclick="switchTicket('${t.id}', this)" id="deploy-action-${t.id}">
+      ${isActive ? '⚡ deployed' : '⚡ deploy'}
+    </button>`;
+  });
+  // Highlight the active card
+  document.querySelectorAll('.card').forEach(card => {
+    const idEl = card.querySelector('.card-id');
+    if (!idEl) return;
+    const ticketId = idEl.textContent.trim();
+    card.classList.toggle('tilt-active', ticketId === active && active !== 'MAIN');
+  });
+}
+
+function toggleTiltTickets() {
+  window._tiltTicketsExpanded = !window._tiltTicketsExpanded;
+  const list = document.getElementById('tilt-tickets-list');
+  const arrow = document.getElementById('tilt-tickets-arrow');
+  if (list) list.style.display = window._tiltTicketsExpanded ? 'block' : 'none';
+  if (arrow) arrow.textContent = window._tiltTicketsExpanded ? '▾' : '▸';
+}
+
+async function switchTicket(ticketId, btn) {
+  const origText = btn.textContent.trim();
+  btn.textContent = '⏳ switching…';
+  btn.className = btn.className.replace('tilt-main-btn','tilt-main-btn') + ' busy';
+  try {
+    const res = await fetch('/switch-ticket', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ticketId })
+    });
+    const data = await res.json();
+    if (data.ok) {
+      // Start polling until switching lock clears
+      _tiltPollTimer = setTimeout(loadTilt, 1500);
+    } else {
+      btn.textContent = '✕ failed';
+      console.error(data.output);
+      setTimeout(() => loadTilt(), 3000);
+    }
+  } catch {
+    btn.textContent = '✕ error';
+    setTimeout(() => loadTilt(), 3000);
+  }
+}
+
+async function toggleWatcher(btn) {
+  const { watcherRunning } = _tiltStatus;
+  const cmd = watcherRunning ? 'stop' : 'start';
+  const origText = btn.textContent;
+  btn.textContent = '…';
+  btn.disabled = true;
+  try {
+    await fetch('/watcher', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cmd })
+    });
+  } catch {}
+  btn.disabled = false;
+  await loadTilt();
+}
+
+loadDeployments().then(() => load());
+loadSessions();
+renderDbs();
+loadTilt();
+
+const _es = new EventSource('/events');
+_es.onmessage = () => loadDeployments().then(() => load());
+</script>
+</body>
+</html>

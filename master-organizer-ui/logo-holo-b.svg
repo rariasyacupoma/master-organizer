@@ -1,0 +1,105 @@
+<!-- Holo B: Single centered screen with "MO" monogram, circuit lines radiating out -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="300" height="300">
+  <defs>
+    <linearGradient id="bgB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#020714"/>
+      <stop offset="100%" stop-color="#0d1035"/>
+    </linearGradient>
+    <linearGradient id="screenB" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0c1a3a"/>
+      <stop offset="100%" stop-color="#071428"/>
+    </linearGradient>
+    <linearGradient id="scanB" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#38bdf8" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#38bdf8" stop-opacity="0.5"/>
+      <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+    </linearGradient>
+    <radialGradient id="screenGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#6366f1" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <filter id="glowB" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="1.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="textGlow">
+      <feGaussianBlur stdDeviation="1" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="hexB">
+      <polygon points="50,4 89.8,27 89.8,73 50,96 10.2,73 10.2,27"/>
+    </clipPath>
+  </defs>
+
+  <polygon points="50,4 89.8,27 89.8,73 50,96 10.2,73 10.2,27" fill="url(#bgB)"/>
+
+  <g clip-path="url(#hexB)">
+    <!-- Circuit traces radiating from center screen -->
+    <!-- Right traces -->
+    <polyline points="72,50 80,50 84,46" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+    <polyline points="72,50 80,50 84,54" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+    <polyline points="72,42 78,42 82,38" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.35"/>
+    <polyline points="72,58 78,58 82,62" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.35"/>
+    <!-- Left traces -->
+    <polyline points="28,50 20,50 16,46" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+    <polyline points="28,50 20,50 16,54" fill="none" stroke="#22d3ee" stroke-width="0.6" opacity="0.4"/>
+    <polyline points="28,42 22,42 18,38" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.35"/>
+    <polyline points="28,58 22,58 18,62" fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.35"/>
+    <!-- Top traces -->
+    <polyline points="50,28 50,20 46,16" fill="none" stroke="#818cf8" stroke-width="0.6" opacity="0.4"/>
+    <polyline points="50,28 50,20 54,16" fill="none" stroke="#818cf8" stroke-width="0.6" opacity="0.4"/>
+    <!-- Bottom traces -->
+    <polyline points="50,72 50,80 46,84" fill="none" stroke="#818cf8" stroke-width="0.6" opacity="0.35"/>
+    <polyline points="50,72 50,80 54,84" fill="none" stroke="#818cf8" stroke-width="0.6" opacity="0.35"/>
+
+    <!-- Circuit nodes at trace ends -->
+    <circle cx="84" cy="46" r="1.2" fill="#22d3ee" filter="url(#glowB)" opacity="0.8"/>
+    <circle cx="84" cy="54" r="1.2" fill="#22d3ee" filter="url(#glowB)" opacity="0.8"/>
+    <circle cx="82" cy="38" r="1" fill="#6366f1" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="82" cy="62" r="1" fill="#6366f1" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="16" cy="46" r="1.2" fill="#22d3ee" filter="url(#glowB)" opacity="0.8"/>
+    <circle cx="16" cy="54" r="1.2" fill="#22d3ee" filter="url(#glowB)" opacity="0.8"/>
+    <circle cx="18" cy="38" r="1" fill="#6366f1" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="18" cy="62" r="1" fill="#6366f1" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="46" cy="16" r="1" fill="#818cf8" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="54" cy="16" r="1" fill="#818cf8" filter="url(#glowB)" opacity="0.7"/>
+    <circle cx="46" cy="84" r="1" fill="#818cf8" filter="url(#glowB)" opacity="0.6"/>
+    <circle cx="54" cy="84" r="1" fill="#818cf8" filter="url(#glowB)" opacity="0.6"/>
+
+    <!-- Center screen -->
+    <rect x="28" y="28" width="44" height="44" rx="3" fill="url(#screenB)"/>
+    <rect x="28" y="28" width="44" height="44" rx="3" fill="url(#screenGlow)"/>
+    <rect x="28" y="28" width="44" height="44" rx="3" fill="none" stroke="#38bdf8" stroke-width="0.8" opacity="0.7"/>
+
+    <!-- Screen top bar -->
+    <rect x="28" y="28" width="44" height="6" rx="3" fill="#0f2244" opacity="0.9"/>
+    <rect x="28" y="31" width="44" height="3" fill="#0f2244"/>
+    <!-- Traffic lights -->
+    <circle cx="33" cy="31" r="1.3" fill="#f87171" opacity="0.75"/>
+    <circle cx="37.5" cy="31" r="1.3" fill="#fbbf24" opacity="0.75"/>
+    <circle cx="42" cy="31" r="1.3" fill="#34d399" opacity="0.75"/>
+
+    <!-- Scan line crossing the screen -->
+    <rect x="28" y="47" width="44" height="1.5" fill="url(#scanB)"/>
+
+    <!-- MO monogram centered -->
+    <text x="50" y="55" font-family="'Courier New', monospace" font-size="16" font-weight="700"
+          fill="#38bdf8" text-anchor="middle" filter="url(#textGlow)" opacity="0.9">MO</text>
+
+    <!-- Subtitle under monogram -->
+    <text x="50" y="63" font-family="'Courier New', monospace" font-size="3.5"
+          fill="#818cf8" text-anchor="middle" opacity="0.6" letter-spacing="1">ORGANIZER</text>
+
+    <!-- Bottom status bar in screen -->
+    <rect x="30" y="66" width="40" height="4" rx="1" fill="#060e22"/>
+    <rect x="31" y="67" width="15" height="2" rx="0.5" fill="#22d3ee" opacity="0.4"/>
+    <rect x="47" y="67" width="8" height="2" rx="0.5" fill="#f59e0b" opacity="0.4"/>
+    <circle cx="66" cy="68" r="1" fill="#34d399" opacity="0.6"/>
+  </g>
+
+  <!-- Hex border -->
+  <polygon points="50,4 89.8,27 89.8,73 50,96 10.2,73 10.2,27"
+           fill="none" stroke="#38bdf8" stroke-width="1.2" opacity="0.55"/>
+  <polygon points="50,4 89.8,27 89.8,73 50,96 10.2,73 10.2,27"
+           fill="none" stroke="#6366f1" stroke-width="0.5" opacity="0.35"/>
+</svg>

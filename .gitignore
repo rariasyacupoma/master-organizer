@@ -1,0 +1,18 @@
+# Personal ticket data — not committed
+master-organizer.json
+deployments-qa.json
+deployments-prod.json
+
+# macOS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Server log
+/tmp/master-organizer-server.log
+
+# Backup files
+*.bak.md

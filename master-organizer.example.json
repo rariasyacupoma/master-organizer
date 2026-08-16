@@ -1,0 +1,63 @@
+{
+  "tickets": [
+    {
+      "id": "CBP-12345",
+      "title": "Migrate recent records from Cassandra to Postgres",
+      "url": "https://your-org.atlassian.net/browse/CBP-12345",
+      "status": "in_progress",
+      "theme": "cass2pg",
+      "services": ["rbac-service", "asset-service"],
+      "currentStage": 3,
+      "latestUpdate": "Stage 2 PRs merged and validated in prod",
+      "nextSteps": [
+        "Open Stage 3 PR in rbac-service",
+        "Enable feature flag in QA"
+      ],
+      "prs": [
+        {
+          "repo": "rbac-service",
+          "number": 821,
+          "url": "https://github.com/your-org/rbac-service/pull/821",
+          "label": "Stage 2: read from Postgres",
+          "state": "merged",
+          "version": "0.1.3640",
+          "deployments": { "qa": true, "prod": true }
+        },
+        {
+          "repo": "asset-service",
+          "number": 304,
+          "url": "https://github.com/your-org/asset-service/pull/304",
+          "label": "Stage 2: read from Postgres",
+          "state": "merged",
+          "version": "0.0.19300",
+          "deployments": { "qa": true, "prod": true }
+        }
+      ]
+    },
+    {
+      "id": "CBP-67890",
+      "title": "Add rate limiting to public API gateway",
+      "url": "https://your-org.atlassian.net/browse/CBP-67890",
+      "status": "blocked",
+      "theme": "security",
+      "services": ["api-gateway"],
+      "currentStage": 1,
+      "latestUpdate": "PR open, waiting on security review",
+      "nextSteps": [
+        "Get approval from security team",
+        "Merge and deploy to QA"
+      ],
+      "prs": [
+        {
+          "repo": "api-gateway",
+          "number": 1048,
+          "url": "https://github.com/your-org/api-gateway/pull/1048",
+          "label": "Stage 1: add rate limiting middleware",
+          "state": "open",
+          "version": null,
+          "deployments": { "qa": false, "prod": false }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Checklist Design — Final</title>
+  <style>
+    :root {
+      --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
+      --text: #d4d4d4; --muted: #525252; --blue: #38bdf8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; padding: 40px; }
+
+    .page-title { color: #c7d2fe; font-size: 1rem; font-weight: 700; margin-bottom: 4px; }
+    .page-sub   { color: var(--muted); font-size: 0.72rem; margin-bottom: 36px; }
+    .col-label  { color: var(--muted); font-size: 0.62rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+    .row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
+
+    /* ── card shell ── */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px; width: 380px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .card-top { display: flex; align-items: flex-start; gap: 10px; }
+    .pip { width: 3px; border-radius: 2px; align-self: stretch; flex-shrink: 0; }
+    .pip.purple { background: #8b5cf6; }
+    .card-id    { font-size: 0.7rem; font-weight: 700; color: var(--blue); text-decoration: none; }
+    .card-title { font-size: 0.85rem; font-weight: 600; color: var(--text); line-height: 1.4; margin-top: 3px; }
+    .badge { font-size: 0.6rem; padding: 2px 8px; border-radius: 99px; font-weight: 600; white-space: nowrap; flex-shrink: 0; }
+    .badge.in-progress { background: #1e3a5f; color: #60a5fa; }
+    .badge.blocked     { background: #3b0a0a; color: #f87171; }
+    .badge.waiting     { background: #1c1a07; color: #fbbf24; }
+
+    /* ── working indicator ── */
+    .working-row {
+      display: flex; align-items: center; gap: 7px;
+      font-size: 0.65rem; color: #22c55e; padding: 2px 0;
+    }
+    .working-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: #22c55e; flex-shrink: 0;
+      animation: wpulse 2s ease-in-out infinite;
+    }
+    .working-since { margin-left: auto; font-size: 0.58rem; color: #2a3a2a; }
+    @keyframes wpulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    /* ── services row ── */
+    .services { display: flex; gap: 6px; flex-wrap: wrap; }
+    .svc {
+      font-size: 0.6rem; background: #0c1f30; border: 1px solid #1a3a50;
+      color: var(--blue); padding: 2px 8px; border-radius: 4px;
+      max-width: 160px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .stage-label { font-size: 0.6rem; color: var(--muted); background: #1a1a1a; border: 1px solid var(--border); padding: 2px 8px; border-radius: 4px; }
+
+    /* ── overall progress bar ── */
+    .overall-progress { display: flex; flex-direction: column; gap: 4px; }
+    .progress-bar-track { height: 4px; background: var(--border); border-radius: 99px; overflow: hidden; }
+    .progress-bar-fill  { height: 100%; border-radius: 99px; }
+    .progress-bar-fill.normal  { background: #2563eb; }
+    .progress-bar-fill.blocked { background: #ef4444; }
+    .progress-bar-fill.waiting { background: #d97706; }
+    .progress-label { font-size: 0.62rem; color: var(--muted); display: flex; justify-content: space-between; align-items: center; }
+    .blocker-pill { font-size: 0.58rem; font-weight: 700; padding: 1px 7px; border-radius: 99px; display: inline-flex; align-items: center; gap: 4px; }
+    .blocker-pill.blocked { background: #3b0a0a; color: #f87171; }
+    .blocker-pill.waiting { background: #1c1a07; color: #fbbf24; }
+
+    /* ── PR chip ── */
+    .pr-chip {
+      display: flex; align-items: center; gap: 5px; min-width: 0;
+      font-size: 0.62rem; padding: 2px 7px; border-radius: 5px;
+      text-decoration: none; border: 1px solid var(--border); background: #111; color: var(--muted);
+    }
+    .pr-chip .pr-repo { color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; flex-shrink: 1; max-width: 120px; }
+    .pr-chip .pr-num  { color: var(--blue); font-weight: 600; flex-shrink: 0; }
+    .pr-chip.merged   { border-color: #1e4a6e; background: #071828; }
+    .pr-chip.merged .pr-num { color: #7dd3fc; }
+    .pr-chip.open     { border-color: #064e3b; background: #0a1f17; }
+    .pr-chip.open .pr-num { color: #34d399; }
+    .env-tag    { font-size: 0.55rem; font-weight: 600; padding: 1px 5px; border-radius: 3px; background: #1c1c1c; color: #333; border: 1px solid #252525; flex-shrink: 0; }
+    .env-active { background: #052e16; color: #4ade80; border-color: #14532d; }
+    .envs       { display: inline-flex; align-items: center; gap: 2px; flex-shrink: 0; }
+    .pr-chips   { display: flex; flex-direction: column; gap: 3px; }
+
+    /* ── blocker note ── */
+    .blocker-note {
+      font-size: 0.68rem; padding: 6px 10px; border-radius: 6px;
+      line-height: 1.4; display: flex; gap: 7px; align-items: flex-start;
+    }
+    .blocker-note.blocked { background: #1f0808; border: 1px solid #7f1d1d; color: #fca5a5; }
+    .blocker-note.waiting { background: #1a1200; border: 1px solid #78350f; color: #fcd34d; }
+
+    /* ── action buttons ── */
+    .card-actions { display: flex; gap: 6px; padding-top: 4px; border-top: 1px solid #1e1e1e; margin-top: 2px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 0.65rem; font-weight: 600; padding: 4px 10px;
+      border-radius: 6px; cursor: pointer; border: 1px solid var(--border);
+      background: transparent; color: var(--muted); font-family: inherit;
+    }
+    .btn:hover          { background: #1f1f1f; color: var(--text); border-color: #3a3a3a; }
+    .btn-terminal       { border-color: #1e3a50; color: #4a8fa8; }
+    .btn-terminal:hover { background: #071828; color: var(--blue); border-color: #2563eb; }
+    .btn-terminal.lit   { background: #071828; color: var(--blue); border-color: #2563eb; }
+    .btn-plan:hover     { background: #1a1200; color: #fcd34d; border-color: #78350f; }
+    .btn-deploy:hover   { background: #052e16; color: #4ade80; border-color: #14532d; }
+    .btn-spacer         { flex: 1; }
+
+    /* ── timeline checklist ── */
+    .cl { display: flex; flex-direction: column; position: relative; padding-left: 22px; }
+    .cl::before { content:''; position:absolute; left:5px; top:10px; bottom:10px; width:1px; background:var(--border); }
+    .cl-stage { display: flex; flex-direction: column; }
+    .cl-stage-hdr {
+      display: flex; align-items: center; gap: 8px;
+      position: relative; padding: 5px 0;
+      cursor: pointer; user-select: none; min-width: 0;
+    }
+    .cl-node {
+      position: absolute; left: -22px;
+      width: 11px; height: 11px; border-radius: 50%;
+      border: 2px solid #333; background: var(--bg); flex-shrink: 0;
+    }
+    .cl-node.done    { background: #22c55e; border-color: #22c55e; }
+    .cl-node.current { background: var(--bg); border-color: #38bdf8; box-shadow: 0 0 0 3px #38bdf820; }
+    .cl-node.blocked { background: var(--bg); border-color: #ef4444; box-shadow: 0 0 0 3px #ef444420; }
+    .cl-node.waiting { background: var(--bg); border-color: #d97706; box-shadow: 0 0 0 3px #d9770620; }
+    .cl-node.future  { border-color: #2a2a2a; }
+    .cl-stage-name {
+      flex: 1; font-size: 0.72rem; font-weight: 700; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .cl-stage.open .cl-stage-name { white-space: normal; }
+    .cl-stage-name.done    { color: #2a3a2a; }
+    .cl-stage-name.current { color: var(--text); }
+    .cl-stage-name.blocked { color: #f87171; }
+    .cl-stage-name.waiting { color: #fbbf24; }
+    .cl-stage-name.future  { color: var(--muted); }
+    /* fraction + bar */
+    .cl-frac-bar   { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+    .cl-frac       { font-size: 0.58rem; font-weight: 600; color: var(--muted); white-space: nowrap; }
+    .cl-frac.blocked { color: #f87171; }
+    .cl-frac.waiting { color: #fbbf24; }
+    .cl-frac-track { width: 48px; height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; flex-shrink: 0; }
+    .cl-frac-fill  { height: 100%; border-radius: 99px; }
+    .cl-frac-fill.done    { background: #22c55e; }
+    .cl-frac-fill.current { background: #2563eb; }
+    .cl-frac-fill.blocked { background: #ef4444; }
+    .cl-frac-fill.waiting { background: #d97706; }
+    .cl-chevron { font-size: 0.52rem; color: #333; transition: transform .15s; flex-shrink: 0; }
+    .cl-stage.open .cl-chevron { transform: rotate(180deg); color: var(--muted); }
+    .cl-body { display: none; padding: 2px 0 10px; }
+    .cl-stage.open .cl-body { display: flex; flex-direction: column; gap: 1px; }
+    .cl-pr-row   { display: flex; align-items: flex-start; gap: 6px; padding: 3px 0 5px; min-width: 0; }
+    .cl-pr-label { font-size: 0.58rem; color: #383838; padding-top: 4px; flex-shrink: 0; }
+    .cl-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 3px 0; font-size: 0.72rem; color: var(--muted); cursor: pointer;
+    }
+    .cl-item.done    { color: #2a3a2a; text-decoration: line-through; }
+    .cl-item.current { color: var(--text); }
+    .cl-item.blocked { color: #f87171; }
+    .cl-item.waiting { color: #fbbf24; }
+    .cl-item input[type=checkbox] { accent-color: #2563eb; width: 12px; height: 12px; cursor: pointer; flex-shrink: 0; margin-top: 2px; }
+  </style>
+</head>
+<body>
+
+<div class="page-title">Checklist — final design</div>
+<div class="page-sub">Timeline rail · fraction+bar substep counter · PR chips with env pipeline · blocked/waiting states · action buttons · working indicator</div>
+
+<div class="row">
+
+  <!-- ────────────── IN PROGRESS + WORKING ────────────── -->
+  <div>
+    <div class="col-label">Active — session open</div>
+    <div class="card">
+      <div class="card-top">
+        <div class="pip purple"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <a class="card-id">CBP-37271</a>
+            <span class="badge in-progress">In progress</span>
+          </div>
+          <div class="card-title">Migrate resolved findings to Postgres</div>
+        </div>
+      </div>
+      <!-- working indicator -->
+      <div class="working-row">
+        <div class="working-dot"></div>
+        <span>Active session open</span>
+        <span class="working-since">since 14:32</span>
+      </div>
+      <div class="services">
+        <span class="svc">rbac-service</span>
+        <span class="svc">asset-service</span>
+        <span class="stage-label">Stage 3</span>
+      </div>
+      <div class="overall-progress">
+        <div class="progress-label"><span>Progress</span><span>55%</span></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill normal" style="width:55%"></div></div>
+      </div>
+
+      <div class="cl">
+        <!-- Stage 1: done, collapsed -->
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 1 — Dual write</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#821</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#304</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created</label>
+            <label class="cl-item done"><input type="checkbox" checked> PRs merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <!-- Stage 2: done, collapsed -->
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 2 — Read Postgres</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#838</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#318</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created</label>
+            <label class="cl-item done"><input type="checkbox" checked> PRs merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <!-- Stage 3: current, open -->
+        <div class="cl-stage open">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node current"></div>
+            <span class="cl-stage-name current">Stage 3 — Remove Cassandra</span>
+            <div class="cl-frac-bar"><span class="cl-frac">2/4</span><div class="cl-frac-track"><div class="cl-frac-fill current" style="width:50%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#851</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#331</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created</label>
+            <label class="cl-item done"><input type="checkbox" checked> PRs merged</label>
+            <label class="cl-item current"><input type="checkbox"> In QA &amp; validate</label>
+            <label class="cl-item"><input type="checkbox"> In Prod</label>
+          </div>
+        </div>
+        <!-- Stage 4: future -->
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node future"></div>
+            <span class="cl-stage-name future">Manual migration</span>
+            <div class="cl-frac-bar"><span class="cl-frac">0/2</span><div class="cl-frac-track"><div class="cl-frac-fill" style="width:0%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <label class="cl-item"><input type="checkbox"> Run migration script in prod</label>
+            <label class="cl-item"><input type="checkbox"> Validate row counts</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <!-- terminal stays lit when session is active -->
+        <button class="btn btn-terminal lit">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3L4.5 6L1.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Terminal
+        </button>
+        <button class="btn btn-plan">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Plan
+        </button>
+        <div class="btn-spacer"></div>
+        <button class="btn btn-deploy">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v7M6 1.5L3.5 4M6 1.5L8.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Deploy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────── BLOCKED ────────────── -->
+  <div>
+    <div class="col-label">Blocked</div>
+    <div class="card">
+      <div class="card-top">
+        <div class="pip purple"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <a class="card-id">CBP-37271</a>
+            <span class="badge blocked">🚫 Blocked</span>
+          </div>
+          <div class="card-title">Migrate resolved findings to Postgres</div>
+        </div>
+      </div>
+      <div class="services">
+        <span class="svc">rbac-service</span>
+        <span class="svc">asset-service</span>
+        <span class="stage-label">Stage 3</span>
+      </div>
+      <div class="overall-progress">
+        <div class="progress-label"><span>Progress</span><span class="blocker-pill blocked">🚫 Blocked</span></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill blocked" style="width:55%"></div></div>
+      </div>
+
+      <div class="cl">
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 1 — Dual write</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#821</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#304</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created &amp; merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 2 — Read Postgres</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#838</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#318</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created &amp; merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <!-- Stage 3: blocked, open -->
+        <div class="cl-stage open">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node blocked"></div>
+            <span class="cl-stage-name blocked">Stage 3 — Remove Cassandra</span>
+            <div class="cl-frac-bar"><span class="cl-frac blocked">2/4</span><div class="cl-frac-track"><div class="cl-frac-fill blocked" style="width:50%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="blocker-note blocked" style="margin-bottom:6px">
+              <span>🚫</span>
+              <span>Infra team needs to decommission the Cassandra cluster first. Ticket: INFRA-4421.</span>
+            </div>
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#851</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#331</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created</label>
+            <label class="cl-item done"><input type="checkbox" checked> PRs merged</label>
+            <label class="cl-item blocked"><input type="checkbox"> 🚫 Waiting for infra team</label>
+            <label class="cl-item"><input type="checkbox"> In Prod</label>
+          </div>
+        </div>
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node future"></div>
+            <span class="cl-stage-name future">Manual migration</span>
+            <div class="cl-frac-bar"><span class="cl-frac">0/2</span><div class="cl-frac-track"><div class="cl-frac-fill" style="width:0%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <label class="cl-item"><input type="checkbox"> Run migration script</label>
+            <label class="cl-item"><input type="checkbox"> Validate row counts</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn btn-terminal">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3L4.5 6L1.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Terminal
+        </button>
+        <button class="btn btn-plan">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Plan
+        </button>
+        <div class="btn-spacer"></div>
+        <button class="btn btn-deploy">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v7M6 1.5L3.5 4M6 1.5L8.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Deploy
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ────────────── WAITING ────────────── -->
+  <div>
+    <div class="col-label">Waiting</div>
+    <div class="card">
+      <div class="card-top">
+        <div class="pip purple"></div>
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+            <a class="card-id">CBP-37271</a>
+            <span class="badge waiting">⏳ Waiting</span>
+          </div>
+          <div class="card-title">Migrate resolved findings to Postgres</div>
+        </div>
+      </div>
+      <div class="services">
+        <span class="svc">rbac-service</span>
+        <span class="svc">asset-service</span>
+        <span class="stage-label">Stage 3</span>
+      </div>
+      <div class="overall-progress">
+        <div class="progress-label"><span>Progress</span><span class="blocker-pill waiting">⏳ Waiting</span></div>
+        <div class="progress-bar-track"><div class="progress-bar-fill waiting" style="width:55%"></div></div>
+      </div>
+
+      <div class="cl">
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 1 — Dual write</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#821</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#304</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created &amp; merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node done"></div>
+            <span class="cl-stage-name done">Stage 2 — Read Postgres</span>
+            <div class="cl-frac-bar"><span class="cl-frac">4/4</span><div class="cl-frac-track"><div class="cl-frac-fill done" style="width:100%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#838</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#318</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag">QA</span><span class="env-tag env-active">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created &amp; merged</label>
+            <label class="cl-item done"><input type="checkbox" checked> In QA &amp; validated</label>
+            <label class="cl-item done"><input type="checkbox" checked> In Prod</label>
+          </div>
+        </div>
+        <!-- Stage 3: waiting, open -->
+        <div class="cl-stage open">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node waiting"></div>
+            <span class="cl-stage-name waiting">Stage 3 — Remove Cassandra</span>
+            <div class="cl-frac-bar"><span class="cl-frac waiting">2/4</span><div class="cl-frac-track"><div class="cl-frac-fill waiting" style="width:50%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <div class="blocker-note waiting" style="margin-bottom:6px">
+              <span>⏳</span>
+              <span>Next QA deployment window is Thursday. No action needed until then.</span>
+            </div>
+            <div class="cl-pr-row"><span class="cl-pr-label">PRs</span>
+              <div class="pr-chips">
+                <a href="#" class="pr-chip merged"><span class="pr-repo">rbac-service</span><span class="pr-num">#851</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+                <a href="#" class="pr-chip merged"><span class="pr-repo">asset-service</span><span class="pr-num">#331</span><span class="envs"><span class="env-tag">Queued</span><span class="env-tag env-active">QA</span><span class="env-tag">Prod</span></span></a>
+              </div>
+            </div>
+            <label class="cl-item done"><input type="checkbox" checked> PRs created</label>
+            <label class="cl-item done"><input type="checkbox" checked> PRs merged</label>
+            <label class="cl-item waiting"><input type="checkbox"> ⏳ Waiting for QA deploy window</label>
+            <label class="cl-item"><input type="checkbox"> In Prod</label>
+          </div>
+        </div>
+        <div class="cl-stage">
+          <div class="cl-stage-hdr" onclick="this.closest('.cl-stage').classList.toggle('open')">
+            <div class="cl-node future"></div>
+            <span class="cl-stage-name future">Manual migration</span>
+            <div class="cl-frac-bar"><span class="cl-frac">0/2</span><div class="cl-frac-track"><div class="cl-frac-fill" style="width:0%"></div></div></div>
+            <span class="cl-chevron">▼</span>
+          </div>
+          <div class="cl-body">
+            <label class="cl-item"><input type="checkbox"> Run migration script</label>
+            <label class="cl-item"><input type="checkbox"> Validate row counts</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-actions">
+        <button class="btn btn-terminal">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M1.5 3L4.5 6L1.5 9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.5 9H10.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Terminal
+        </button>
+        <button class="btn btn-plan">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><rect x="1.5" y="1.5" width="9" height="9" rx="1.5" stroke="currentColor" stroke-width="1.2"/><path d="M3.5 4h5M3.5 6h5M3.5 8h3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Plan
+        </button>
+        <div class="btn-spacer"></div>
+        <button class="btn btn-deploy">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M6 1.5v7M6 1.5L3.5 4M6 1.5L8.5 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M2 10.5H10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+          Deploy
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
