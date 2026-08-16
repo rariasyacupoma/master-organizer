@@ -282,7 +282,9 @@ export default {
         </div>
         <div style="display:flex;align-items:center;gap:12px">
           <button id="sync-btn" :class="syncState" @click="syncPRs">
-            {{ syncState === 'syncing' ? '⟳ Syncing…' : syncState === 'success' ? '✓ Synced' : syncState === 'error' ? '✕ Failed' : '⟳ Sync PRs' }}
+            <span v-if="syncState === 'syncing'" class="spin">⟳</span>
+            <span v-else>⟳</span>
+            {{ syncState === 'syncing' ? 'Syncing…' : syncState === 'success' ? 'Synced ✓' : syncState === 'error' ? 'Failed ✕' : 'Sync PRs' }}
           </button>
           <button id="deploy-view-btn" @click="openDeployments">⬡ Deployments</button>
           <div class="view-toggle">
