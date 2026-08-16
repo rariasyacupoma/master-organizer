@@ -10,13 +10,14 @@ export default {
   props: { ticketId: String },
   emits: ['focus-tab', 'view-plan', 'switch-ticket'],
   setup(props) {
-    const isWorking = computed(() => !!store.workingStatus[props.ticketId])
+    const isWorking  = computed(() => !!store.workingStatus[props.ticketId])
+    const isSwitching = computed(() => store.switchingTicketId === props.ticketId)
     const tilt = computed(() => {
       const { active, switchable } = store.tiltStatus
       const isSwitchable = switchable.some(t => t.id === props.ticketId)
       return { isActive: props.ticketId === active, isSwitchable }
     })
-    return { isWorking, tilt, TERMINAL_SVG, PLAN_SVG, DEPLOY_SVG }
+    return { isWorking, isSwitching, tilt, TERMINAL_SVG, PLAN_SVG, DEPLOY_SVG }
   },
   template: `
     <div class="card-actions">
@@ -28,11 +29,14 @@ export default {
               v-html="PLAN_SVG + ' Plan'"></button>
       <div class="btn-spacer"></div>
       <button class="btn btn-deploy"
-              :class="{ active: tilt.isActive }"
-              :disabled="!tilt.isSwitchable"
-              :style="{ opacity: tilt.isSwitchable ? '' : '0.3', cursor: tilt.isSwitchable ? '' : 'default' }"
-              @click="tilt.isSwitchable && $emit('switch-ticket', ticketId)"
-              v-html="DEPLOY_SVG + (tilt.isActive ? ' Deployed' : ' Deploy')"></button>
+              :class="{ active: tilt.isActive, switching: isSwitching }"
+              :disabled="!tilt.isSwitchable || isSwitching"
+              :style="{ opacity: tilt.isSwitchable ? '' : '0.3', cursor: (tilt.isSwitchable && !isSwitching) ? '' : 'default' }"
+              @click="tilt.isSwitchable && !isSwitching && $emit('switch-ticket', ticketId)">
+        <span v-if="isSwitching" class="deploy-spinner"></span>
+        <span v-else v-html="DEPLOY_SVG"></span>
+        {{ isSwitching ? 'Switching…' : tilt.isActive ? 'Deployed' : 'Deploy' }}
+      </button>
     </div>
   `,
 }

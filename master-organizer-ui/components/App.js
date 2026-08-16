@@ -105,11 +105,14 @@ export default {
         if (store.tiltStatus.switching) {
           clearTimeout(_tiltPoll)
           _tiltPoll = setTimeout(loadTilt, 2000)
+        } else {
+          store.switchingTicketId = null
         }
       } catch {}
     }
 
     async function switchTicket(ticketId) {
+      store.switchingTicketId = ticketId
       try {
         const res  = await fetch('/switch-ticket', {
           method: 'POST',
@@ -118,8 +121,8 @@ export default {
         })
         const data = await res.json()
         if (data.ok) { clearTimeout(_tiltPoll); _tiltPoll = setTimeout(loadTilt, 1500) }
-        else console.error('switch-ticket failed:', data.output)
-      } catch (e) { console.error('switch-ticket error:', e) }
+        else { store.switchingTicketId = null; console.error('switch-ticket failed:', data.output) }
+      } catch (e) { store.switchingTicketId = null; console.error('switch-ticket error:', e) }
     }
 
     async function toggleWatcher() {
