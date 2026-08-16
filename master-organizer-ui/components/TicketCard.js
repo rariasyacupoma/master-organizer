@@ -1,4 +1,4 @@
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { store } from './store.js'
 import StatusBadge from './StatusBadge.js'
 import WorkingIndicator from './WorkingIndicator.js'
@@ -6,14 +6,58 @@ import PrChip from './PrChip.js'
 import StageChecklist from './StageChecklist.js'
 import CardActions from './CardActions.js'
 
+const EASE = 'cubic-bezier(.4,0,.2,1)'
+
 export default {
   name: 'TicketCard',
   components: { StatusBadge, WorkingIndicator, PrChip, StageChecklist, CardActions },
   props: { ticket: Object },
   emits: ['focus-tab', 'view-plan', 'switch-ticket', 'toggle-checklist', 'focus-card'],
   setup(props) {
+    const cardRef    = ref(null)
     const isFocused  = computed(() => store.focusedTicketId === props.ticket.id)
     const isTiltActive = computed(() => store.tiltStatus.active === props.ticket.id)
+
+    const savedRect   = ref(null)
+    const placeholder = ref(null)
+
+    watch(isFocused, async (focused) => {
+      const el = cardRef.value
+      if (!el) return
+
+      if (focused) {
+        const rect = el.getBoundingClientRect()
+        savedRect.value = { left: rect.left, top: rect.top, width: rect.width, height: rect.height }
+
+        // Hold the grid space while card is floating
+        const ph = document.createElement('div')
+        ph.style.cssText = `width:${rect.width}px;height:${rect.height}px;visibility:hidden;pointer-events:none`
+        el.parentNode.insertBefore(ph, el)
+        placeholder.value = ph
+
+        // Pin at current position first (no visual jump)
+        el.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;height:${rect.height}px;margin:0;z-index:51;transition:none`
+
+        // Next frame: animate to center
+        await nextTick()
+        requestAnimationFrame(() => {
+          el.style.cssText = `position:fixed;left:50%;top:50%;width:min(740px,92vw);max-height:88vh;overflow-y:auto;transform:translate(-50%,-50%);margin:0;z-index:51;transition:left .35s ${EASE},top .35s ${EASE},width .35s ${EASE},transform .35s ${EASE}`
+        })
+      } else {
+        const rect = savedRect.value
+        if (!rect || !el) return
+
+        // Snap height back instantly, then animate position back
+        el.style.cssText = `position:fixed;left:${rect.left}px;top:${rect.top}px;width:${rect.width}px;overflow-y:hidden;transform:none;margin:0;z-index:51;transition:left .3s ${EASE},top .3s ${EASE},width .3s ${EASE},transform .3s ${EASE}`
+
+        el.addEventListener('transitionend', () => {
+          el.style.cssText = ''
+          placeholder.value?.remove()
+          placeholder.value = null
+          savedRect.value = null
+        }, { once: true })
+      }
+    })
 
     // StageChecklist: overall progress
     const progress = computed(() => {
@@ -29,7 +73,7 @@ export default {
       return { done, total: all.length, pct, barCls, currentIdx }
     })
 
-    return { isFocused, isTiltActive, progress }
+    return { cardRef, isFocused, isTiltActive, progress }
   },
   methods: {
     handleClick(e) {
@@ -42,7 +86,8 @@ export default {
     },
   },
   template: `
-    <div class="card"
+    <div ref="cardRef"
+         class="card"
          :class="{ 'tilt-active': isTiltActive, focused: isFocused }"
          @click="handleClick">
 
