@@ -924,6 +924,10 @@
     /* PR chips (checklist view) */
     .pr-chips { display:flex; flex-direction:column; gap:4px; min-width:0; flex:1; }
     .pr-chip { display:flex; align-items:center; gap:6px; min-width:0; font-size:0.72rem; padding:3px 8px; border-radius:5px; text-decoration:none; border:1px solid var(--border); background:#111; color:var(--muted); }
+    .pr-chip .pr-chip-icon { flex-shrink:0; font-size:0.7rem; }
+    .pr-chip.merged .pr-chip-icon { color:#22c55e; }
+    .pr-chip.open   .pr-chip-icon { color:#f59e0b; }
+    .pr-chip.closed .pr-chip-icon { color:#f87171; }
     .pr-chip .pr-chip-repo { color:#475569; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex-shrink:1; max-width:140px; }
     .pr-chip .pr-chip-num  { font-weight:600; flex-shrink:0; }
     .pr-chip.merged { border-color:#1e4a6e; background:#071828; }

@@ -14,6 +14,7 @@ export default {
   },
   template: `
     <a class="pr-chip" :class="pr.state" :href="pr.url" target="_blank">
+      <span class="pr-chip-icon">{{ pr.state === 'merged' ? '✓' : '●' }}</span>
       <span class="pr-chip-repo" :title="pr.repo">{{ repoShort }}</span>
       <span class="pr-chip-num">#{{ pr.number }}</span>
       <span v-if="envTags" class="pr-env-tags">
