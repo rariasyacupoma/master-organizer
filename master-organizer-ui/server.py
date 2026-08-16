@@ -368,7 +368,14 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     ticket = next((t for t in data.get("tickets", []) if t["id"] == ticket_id), None)
                     if ticket is None:
                         raise KeyError(f"ticket {ticket_id} not found")
-                    ticket["stages"][stage_idx]["checklist"][item_idx]["done"] = bool(done)
+                    stage = ticket["stages"][stage_idx]
+                    stage["checklist"][item_idx]["done"] = bool(done)
+                    # Auto-complete stage when all items are done; revert when any is unchecked
+                    if all(i["done"] for i in stage["checklist"]):
+                        if stage.get("status") != "done":
+                            stage["status"] = "done"
+                    elif stage.get("status") == "done":
+                        stage["status"] = "in_progress"
                     tmp = JSON_FILE + ".tmp"
                     with open(tmp, "w") as f:
                         json.dump(data, f, indent=2)
