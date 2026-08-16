@@ -50,9 +50,13 @@ const StageRow = {
         <span class="cl-chevron">▼</span>
       </div>
       <div class="cl-body">
-        <div v-if="stage.blockerNote" class="blocker-note" :class="stage.status" style="margin-bottom:6px">
-          <span>{{ stage.status === 'blocked' ? '🚫' : '⏳' }}</span>
+        <div v-if="stage.blockerNote" class="blocker-note blocked" style="margin-bottom:6px">
+          <span>🚫</span>
           <span>{{ stage.blockerNote }}</span>
+        </div>
+        <div v-if="stage.waitingNote" class="blocker-note waiting" style="margin-bottom:6px">
+          <span>⏳</span>
+          <span>{{ stage.waitingNote }}</span>
         </div>
         <div v-if="stage.prs && stage.prs.length" class="cl-pr-row">
           <span class="cl-pr-label">PRs</span>
