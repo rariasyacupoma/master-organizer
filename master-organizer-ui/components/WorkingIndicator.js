@@ -16,7 +16,7 @@ export default {
   template: `
     <div v-if="isWorking" class="working-row">
       <div class="working-dot"></div>
-      <span>Active session open</span>
+      <span class="working-label">WORKING</span>
       <span class="working-since">since {{ sinceTime }}</span>
     </div>
   `,
