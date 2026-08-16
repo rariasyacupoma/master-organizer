@@ -18,6 +18,7 @@ export default {
       <span class="pr-chip-repo" :title="pr.repo">{{ repoShort }}</span>
       <span class="pr-chip-sep">·</span>
       <span class="pr-chip-num">#{{ pr.number }}</span>
+      <span v-if="pr.state === 'merged' && pr.version" class="pr-chip-version">{{ pr.version }}</span>
       <span class="pr-env-tags">
         <span class="env-tag" :class="envTags ? (envTags.queued.on ? 'queued-on' : 'queued-off') : 'queued-off'" :title="envTags ? envTags.queued.title : ''">Queued</span>
         <span class="env-tag" :class="envTags ? (envTags.qa.on     ? 'qa-on'     : 'qa-off')     : 'qa-off'"     :title="envTags ? envTags.qa.title    : ''">QA</span>
