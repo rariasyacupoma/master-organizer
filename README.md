@@ -1,6 +1,6 @@
 # Master Organizer Dashboard
 
-A local developer dashboard for tracking in-progress Jira tickets across multiple services and PRs. Built as a single-page web app served by a lightweight Python server — no build step, no framework, no cloud dependency.
+A local developer dashboard for tracking in-progress Jira tickets across multiple services and PRs. Built as a Vue 3 single-page app served by a lightweight Python server — no build step, no npm, no cloud dependency. Vue 3 is loaded from CDN via an ES module importmap.
 
 ![Dashboard showing ticket tiles grouped by epic with PR deployment status](.github/preview.png)
 
@@ -13,7 +13,7 @@ A local developer dashboard for tracking in-progress Jira tickets across multipl
 - **Live working indicator** — a pulsing green dot appears on a tile while a Claude session is actively working on that ticket
 - **Checklist view** — per-ticket implementation plan displayed as a collapsible timeline with stage-level progress (fraction bar), blocked/waiting states, and inline blocker notes
 - **Epic grouping** with collapse/expand, Jira epic icon, and count badge
-- **Grid, Kanban, and Table views** — toggle in the header
+- **Grid and Table views** — toggle in the header
 - **PR sync** — one-click GitHub PR state refresh via `gh` CLI
 - **Tilt / ticket switching** — switch your local dev environment between tickets
 - **macOS desktop notifications** — notifies when a Claude session finishes working on a ticket (with custom app icon on the left)
@@ -101,6 +101,8 @@ Follow the prompt to allow notifications in System Settings → Notifications �
 
 `master-organizer.json` lives at the repo root. The server reads it on every request — edit it directly and the dashboard reflects changes within seconds.
 
+### Simple view (no implementation plan)
+
 ```json
 {
   "tickets": [
@@ -109,7 +111,6 @@ Follow the prompt to allow notifications in System Settings → Notifications �
       "title": "Migrate recent records from Cassandra to Postgres",
       "url": "https://your-org.atlassian.net/browse/CBP-12345",
       "status": "in_progress",
-      "theme": "cass2pg",
       "services": ["rbac-service", "asset-service"],
       "currentStage": 3,
       "latestUpdate": "Stage 2 PRs merged and validated in prod",
@@ -124,8 +125,7 @@ Follow the prompt to allow notifications in System Settings → Notifications �
           "url": "https://github.com/your-org/rbac-service/pull/821",
           "label": "Stage 2: read from Postgres",
           "state": "merged",
-          "version": "0.1.3640",
-          "deployments": { "qa": true, "prod": true }
+          "version": "0.1.3640"
         }
       ]
     }
@@ -133,11 +133,44 @@ Follow the prompt to allow notifications in System Settings → Notifications �
 }
 ```
 
-**`status`** — `in_progress` | `blocked` | `waiting` | `new` | `done`
+### StageChecklist view (implementation plan with stages)
 
-**`theme`** — controls the left border color. Built-in themes: `cass2pg` (purple), `security` (red), `test-revamp` (cyan), `infra` (amber). Add custom themes in `index.html` → `THEME_COLOR`.
+When a ticket has a formal implementation plan broken into stages, replace `latestUpdate`, `nextSteps`, and `prs` with a `stages` array. The dashboard switches to the timeline/checklist tile view automatically.
 
-**`deployments`** on a PR — `{ "qa": true, "prod": false }`. Used to highlight the active env tag green. Updated automatically by `bin/update-deployments.sh` if wired up.
+```json
+{
+  "id": "CBP-12345",
+  "title": "Migrate recent records from Cassandra to Postgres",
+  "url": "https://your-org.atlassian.net/browse/CBP-12345",
+  "status": "in_progress",
+  "services": ["rbac-service"],
+  "stages": [
+    {
+      "name": "Add timestamp to model",
+      "status": "done",
+      "checklist": [
+        { "label": "PR created", "done": true },
+        { "label": "PR merged",  "done": true }
+      ],
+      "prs": [{ "repo": "rbac-service", "number": 821, "url": "...", "state": "merged", "version": "0.1.3640" }]
+    },
+    {
+      "name": "Feature-flag reads",
+      "status": "in_progress",
+      "checklist": [
+        { "label": "PR created",          "done": true },
+        { "label": "PR merged",           "done": false },
+        { "label": "Flag enabled in QA",  "done": false }
+      ],
+      "prs": [{ "repo": "rbac-service", "number": 839, "url": "...", "state": "open" }]
+    }
+  ]
+}
+```
+
+**`status`** — `in_progress` | `blocked` | `waiting`
+
+**Stage `status`** — `done` | `in_progress` | `blocked` | `waiting` | `pending`
 
 ---
 
@@ -173,6 +206,29 @@ The server reads additional data from `$JIRA_TICKETS_WORKDIR/<ticket-id>/`:
   }
 ]
 ```
+
+---
+
+## Frontend architecture
+
+The dashboard uses **Vue 3** loaded from CDN (no build step). `index.html` is a thin shell that mounts the app; all logic lives in ES module component files under `master-organizer-ui/components/`:
+
+| File | Purpose |
+|---|---|
+| `App.js` | Root component — data fetching, SSE, tilt polling, overlays |
+| `store.js` | Reactive global store shared by all components |
+| `EpicGroup.js` | Collapsible epic group with card grid |
+| `TicketCard.js` | Card branching Simple vs StageChecklist view |
+| `StageChecklist.js` | Timeline rail with stage rows, fraction bars, PR chips |
+| `PrChip.js` | PR chip with live Queued/QA/Prod env tags |
+| `CardActions.js` | Terminal / Plan / Deploy action buttons |
+| `WorkingIndicator.js` | Pulsing green working dot |
+| `StatusBadge.js` | Blocked / Waiting status badge |
+| `Sidebar.js` | Tilt section, sessions, databases, port forwards |
+| `TableView.js` | Compact table view |
+| `DeploymentsOverlay.js` | Full-screen deployments table (QA vs Prod) |
+| `PlanOverlay.js` | Full-screen implementation plan viewer |
+| `ToastContainer.js` | Toast notification stack |
 
 ---
 
