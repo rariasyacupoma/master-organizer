@@ -91,14 +91,16 @@ export default {
          :class="{ 'tilt-active': isTiltActive, focused: isFocused }"
          @click="handleClick">
 
-      <!-- header: id + badge + working + title -->
+      <!-- working badge: absolute top-right -->
+      <working-indicator :ticket-id="ticket.id" />
+
+      <!-- header: id + badge + title -->
       <div class="card-header">
         <div style="flex:1;display:flex;flex-direction:column;gap:6px">
           <div style="display:flex;align-items:center;gap:8px;justify-content:space-between">
             <a class="card-id" :href="ticket.url" target="_blank">{{ ticket.id }}</a>
             <status-badge :status="ticket.status" />
           </div>
-          <working-indicator :ticket-id="ticket.id" />
           <div class="card-title">{{ ticket.title }}</div>
         </div>
       </div>

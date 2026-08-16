@@ -14,10 +14,10 @@ export default {
     return { isWorking, sinceTime }
   },
   template: `
-    <div v-if="isWorking" class="working-row">
+    <div v-if="isWorking" class="working-badge">
       <div class="working-dot"></div>
       <span class="working-label">WORKING</span>
-      <span class="working-since">since {{ sinceTime }}</span>
+      <span class="working-since">{{ sinceTime }}</span>
     </div>
   `,
 }
