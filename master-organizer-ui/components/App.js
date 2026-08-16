@@ -207,8 +207,13 @@ export default {
         if (!data.ok) console.error('toggle-checklist failed:', data.error)
         else {
           const ticket = store.tickets.find(t => t.id === ticketId)
-          if (ticket?.stages?.[stageIdx]?.checklist?.[itemIdx] != null) {
-            ticket.stages[stageIdx].checklist[itemIdx].done = done
+          const stage  = ticket?.stages?.[stageIdx]
+          if (stage?.checklist?.[itemIdx] != null) {
+            stage.checklist[itemIdx].done = done
+            // Mirror server: auto-complete stage when all items are done
+            if (stage.checklist.every(i => i.done) && stage.status !== 'done') {
+              stage.status = 'done'
+            }
           }
         }
       } catch (e) { console.error('toggle-checklist error:', e) }

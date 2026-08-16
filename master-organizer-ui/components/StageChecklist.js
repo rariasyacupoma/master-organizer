@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { ref, computed, watch } from 'vue'
 import PrChip from './PrChip.js'
 
 function nodeClass(status) {
@@ -15,13 +15,18 @@ const StageRow = {
   props: { stage: Object, stageIdx: Number, ticketId: String },
   emits: ['toggle'],
   setup(props) {
-    const autoOpen = ['in_progress', 'blocked', 'waiting'].includes(props.stage.status)
-    const open = ref(autoOpen)
-    const nc = nodeClass(props.stage.status)
-    const doneCount = props.stage.checklist.filter(i => i.done).length
-    const total     = props.stage.checklist.length
-    const pct       = total ? Math.round(doneCount / total * 100) : 0
-    const fracCls   = props.stage.status === 'blocked' ? 'blocked' : props.stage.status === 'waiting' ? 'waiting' : ''
+    const open = ref(['in_progress', 'blocked', 'waiting'].includes(props.stage.status))
+
+    // Auto-collapse when status flips to done (e.g. after all checkboxes ticked)
+    watch(() => props.stage.status, (newStatus) => {
+      if (newStatus === 'done') open.value = false
+    })
+
+    const nc       = computed(() => nodeClass(props.stage.status))
+    const doneCount = computed(() => props.stage.checklist.filter(i => i.done).length)
+    const total     = computed(() => props.stage.checklist.length)
+    const pct       = computed(() => total.value ? Math.round(doneCount.value / total.value * 100) : 0)
+    const fracCls   = computed(() => props.stage.status === 'blocked' ? 'blocked' : props.stage.status === 'waiting' ? 'waiting' : '')
     return { open, nc, doneCount, total, pct, fracCls }
   },
   methods: {
