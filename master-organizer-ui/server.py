@@ -137,7 +137,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                         with open(info_path) as f:
                             info = json.load(f)
                             if info.get("working"):
-                                result[ticket_id] = True
+                                result[ticket_id] = info.get("workingSince") or True
                     except (FileNotFoundError, json.JSONDecodeError):
                         pass
             except FileNotFoundError:

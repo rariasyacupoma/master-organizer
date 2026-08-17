@@ -401,11 +401,11 @@
       right: 12px;
       display: flex;
       align-items: center;
-      gap: 6px;
-      background: rgba(20, 40, 20, 0.85);
+      gap: 5px;
+      background: rgba(20, 40, 20, 0.9);
       border: 1px solid #16a34a;
       border-radius: 6px;
-      padding: 4px 10px;
+      padding: 5px 10px;
       z-index: 2;
       pointer-events: none;
     }
@@ -423,14 +423,18 @@
       letter-spacing: 0.1em;
       color: #4ade80;
     }
-    .working-since {
-      font-size: 0.62rem;
+    .working-sep {
+      font-size: 0.78rem;
+      color: #166534;
+    }
+    .working-dur {
+      font-size: 0.72rem;
       color: #4ade80;
-      opacity: 0.65;
+      opacity: 0.55;
     }
     @keyframes working-pulse {
-      0%, 100% { opacity: 1; box-shadow: 0 0 4px #22c55e; }
-      50%       { opacity: 0.4; box-shadow: none; }
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
     }
 
     /* ── Plan overlay ── */
