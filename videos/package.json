@@ -1,0 +1,23 @@
+{
+  "name": "master-organizer-videos",
+  "version": "1.0.0",
+  "description": "Remotion videos for master-organizer dashboard",
+  "remotion": {
+    "entryPoint": "src/Root.tsx"
+  },
+  "scripts": {
+    "preview": "npx remotion studio src/Root.tsx",
+    "render": "npx remotion render src/Root.tsx DashboardScroll out/dashboard-scroll.mp4"
+  },
+  "keywords": [],
+  "license": "ISC",
+  "devDependencies": {
+    "@remotion/cli": "^4.0.512",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "remotion": "^4.0.512",
+    "typescript": "^7.0.2"
+  }
+}
