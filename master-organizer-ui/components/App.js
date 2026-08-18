@@ -20,6 +20,7 @@ export default {
     const planOpen          = ref(false)
     const sessions          = ref([])
     const syncState         = ref('')     // '' | 'syncing' | 'success' | 'error'
+    const depUpdateState    = ref('')     // '' | 'updating' | 'success' | 'error'
     let _es                 = null
     let _workingPoll        = null
     let _tiltPoll           = null
@@ -163,6 +164,19 @@ export default {
       setTimeout(() => { syncState.value = '' }, 3000)
     }
 
+    // ── Update Deployments ──
+    async function updateDeployments() {
+      if (depUpdateState.value === 'updating') return
+      depUpdateState.value = 'updating'
+      try {
+        const res  = await fetch('/update-deployments', { method: 'POST' })
+        const data = await res.json()
+        depUpdateState.value = data.ok ? 'success' : 'error'
+        if (data.ok) await loadAll()
+      } catch { depUpdateState.value = 'error' }
+      setTimeout(() => { depUpdateState.value = '' }, 3000)
+    }
+
     // ── Plan overlay ──
     function viewPlan(ticketId) {
       planTicketId.value = ticketId
@@ -261,13 +275,13 @@ export default {
     })
 
     return {
-      view, epicGroups, stats, sessions, syncState,
+      view, epicGroups, stats, sessions, syncState, depUpdateState,
       deploymentsOpen, planOpen, planTicketId,
       openDeployments, closeDeployments,
       viewPlan, closePlan,
       focusCard, unfocusCard,
       toggleChecklist, focusTab,
-      switchTicket, toggleWatcher, syncPRs,
+      switchTicket, toggleWatcher, syncPRs, updateDeployments,
       store, STATUS_LABEL,
     }
   },
@@ -287,6 +301,11 @@ export default {
             <span v-if="syncState === 'syncing'" class="spin">⟳</span>
             <span v-else>⟳</span>
             {{ syncState === 'syncing' ? 'Syncing…' : syncState === 'success' ? 'Synced ✓' : syncState === 'error' ? 'Failed ✕' : 'Sync PRs' }}
+          </button>
+          <button id="update-dep-btn" :class="depUpdateState" @click="updateDeployments">
+            <span v-if="depUpdateState === 'updating'" class="spin">⟳</span>
+            <span v-else>↓</span>
+            {{ depUpdateState === 'updating' ? 'Updating…' : depUpdateState === 'success' ? 'Updated ✓' : depUpdateState === 'error' ? 'Failed ✕' : 'Update Versions' }}
           </button>
           <button id="deploy-view-btn" @click="openDeployments">⬡ Deployments</button>
           <div class="view-toggle">

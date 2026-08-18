@@ -625,6 +625,26 @@
     .panel-btn[data-env="preprod"]:hover,
     .panel-btn[data-env="qa"]:hover   { color: #d4d4d8; }
 
+    /* ── Update Versions button ── */
+    #update-dep-btn {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      background: none;
+      border: 1px solid #52525b;
+      color: #a1a1aa;
+      cursor: pointer;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      transition: all .15s;
+    }
+    #update-dep-btn:hover  { border-color: #86efac; color: #86efac; }
+    #update-dep-btn.updating { opacity: .75; pointer-events: none; border-color: #86efac; color: #86efac; }
+    #update-dep-btn.success  { border-color: #22c55e; color: #22c55e; }
+    #update-dep-btn.error    { border-color: #ef4444; color: #ef4444; }
+
     /* ── Deployments button ── */
     #deploy-view-btn {
       display: flex;

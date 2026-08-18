@@ -1,9 +1,47 @@
 #!/usr/bin/env python3
-import http.server, subprocess, json, os, time, threading, socketserver
+import http.server, subprocess, json, os, time, threading, socketserver, urllib.request, urllib.parse, urllib.error, datetime
 
 UI_DIR = os.path.dirname(os.path.abspath(__file__))
 ROOT_DIR = os.path.dirname(UI_DIR)
 JSON_FILE = os.path.join(ROOT_DIR, "master-organizer.json")
+
+BRUNO_ENV_FILE = os.path.expanduser("~/go/src/github.com/calculi-corp/bruno-collections/saas-platform/.env")
+KEYCLOAK_TOKEN_URL = "https://id.cloudbees.io/realms/cloudbees/protocol/openid-connect/token"
+INVENTORY_URL = (
+    "https://api.cloudbees.io/v3/organizations/fafadf1d-159d-447b-46e9-a0193467420e"
+    "/environments-inventory?pagination.page=1"
+    "&filter.applicationId=006b4ac4-2422-41fa-a0d5-cc228c714508"
+)
+
+def _read_bruno_credentials():
+    client_id, client_secret = None, None
+    try:
+        with open(BRUNO_ENV_FILE) as f:
+            for line in f:
+                line = line.strip()
+                if line.startswith("productionM2MClientId="):
+                    client_id = line.split("=", 1)[1]
+                elif line.startswith("productionM2MClientSecret="):
+                    client_secret = line.split("=", 1)[1]
+    except FileNotFoundError:
+        pass
+    return client_id, client_secret
+
+def _fetch_m2m_token(client_id, client_secret):
+    data = urllib.parse.urlencode({
+        "grant_type": "client_credentials",
+        "client_id": client_id,
+        "client_secret": client_secret,
+    }).encode()
+    req = urllib.request.Request(KEYCLOAK_TOKEN_URL, data=data,
+                                  headers={"Content-Type": "application/x-www-form-urlencoded"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.load(r)["access_token"]
+
+def _fetch_inventory(token):
+    req = urllib.request.Request(INVENTORY_URL, headers={"Authorization": f"Bearer {token}"})
+    with urllib.request.urlopen(req, timeout=15) as r:
+        return json.load(r)
 
 _ccorp_dir = os.environ.get("GITHUB_CCORP_ORG_DIR", os.path.expanduser("~/go/src/github.com/calculi-corp"))
 GR_ALL_DIR = os.path.join(_ccorp_dir, "gr-all")
@@ -383,6 +421,36 @@ class Handler(http.server.SimpleHTTPRequestHandler):
                     self.respond(True)
                 except (KeyError, IndexError, TypeError) as e:
                     self.respond(False, str(e))
+
+        elif self.path == "/update-deployments":
+            try:
+                client_id, client_secret = _read_bruno_credentials()
+                if not client_id or not client_secret:
+                    self.respond(False, "M2M credentials not found in bruno .env file")
+                    return
+                token    = _fetch_m2m_token(client_id, client_secret)
+                data     = _fetch_inventory(token)
+                today    = datetime.date.today().isoformat()
+                qa, prod = {}, {}
+                for item in data.get("inventoryItems", []):
+                    svc = item["resourceName"]
+                    for dep in item.get("deployments", []):
+                        env  = dep["environment"]["name"]
+                        ver  = dep["artifactVersion"]
+                        entry = {"version": ver, "deployedAt": today}
+                        if env == "qa":
+                            qa[svc]   = entry
+                        elif env == "prod":
+                            prod[svc] = entry
+                for fname, services in [("deployments-qa.json", qa), ("deployments-prod.json", prod)]:
+                    path = os.path.join(ROOT_DIR, fname)
+                    tmp  = path + ".tmp"
+                    with open(tmp, "w") as f:
+                        json.dump({"services": services}, f, indent=2)
+                    os.replace(tmp, path)
+                self.respond(True, f"Updated {len(qa)} QA and {len(prod)} Prod service versions")
+            except Exception as e:
+                self.respond(False, str(e))
 
         else:
             self.send_response(404)
