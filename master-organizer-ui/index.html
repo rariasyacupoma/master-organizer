@@ -991,6 +991,14 @@
       display: inline-block;
     }
     @keyframes deploy-spin { to { transform: rotate(360deg); } }
+    .terminal-spinner {
+      width: 10px; height: 10px; flex-shrink: 0;
+      border: 2px solid #1a3040;
+      border-top-color: #7ec8e3;
+      border-radius: 50%;
+      animation: deploy-spin .7s linear infinite;
+      display: inline-block;
+    }
   </style>
 </head>
 <body>

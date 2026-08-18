@@ -10,20 +10,26 @@ export default {
   props: { ticketId: String },
   emits: ['focus-tab', 'view-plan', 'switch-ticket'],
   setup(props) {
-    const isWorking  = computed(() => !!store.workingStatus[props.ticketId])
-    const isSwitching = computed(() => store.switchingTicketId === props.ticketId)
+    const isWorking         = computed(() => !!store.workingStatus[props.ticketId])
+    const isSwitching       = computed(() => store.switchingTicketId === props.ticketId)
+    const isOpeningTerminal = computed(() => store.focusingTabTicketId === props.ticketId)
     const tilt = computed(() => {
       const { active, switchable } = store.tiltStatus
       const isSwitchable = switchable.some(t => t.id === props.ticketId)
       return { isActive: props.ticketId === active, isSwitchable }
     })
-    return { isWorking, isSwitching, tilt, TERMINAL_SVG, PLAN_SVG, DEPLOY_SVG }
+    return { isWorking, isSwitching, isOpeningTerminal, tilt, TERMINAL_SVG, PLAN_SVG, DEPLOY_SVG }
   },
   template: `
     <div class="card-actions">
       <button class="btn btn-terminal" :class="{ lit: isWorking }"
-              @click="$emit('focus-tab', ticketId)"
-              v-html="TERMINAL_SVG + ' Terminal'"></button>
+              :disabled="isOpeningTerminal"
+              :style="{ opacity: isOpeningTerminal ? '0.7' : '' }"
+              @click="$emit('focus-tab', ticketId)">
+        <span v-if="isOpeningTerminal" class="terminal-spinner"></span>
+        <span v-else v-html="TERMINAL_SVG"></span>
+        Terminal
+      </button>
       <button class="btn btn-plan"
               @click="$emit('view-plan', ticketId)"
               v-html="PLAN_SVG + ' Plan'"></button>

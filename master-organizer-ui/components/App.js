@@ -139,6 +139,7 @@ export default {
 
     // ── Focus tab / session ──
     async function focusTab(ticketId) {
+      store.focusingTabTicketId = ticketId
       try {
         await fetch('/focus-tab', {
           method: 'POST',
@@ -146,6 +147,7 @@ export default {
           body: JSON.stringify({ ticketId }),
         })
       } catch {}
+      finally { store.focusingTabTicketId = null }
     }
 
     // ── Sync PRs ──

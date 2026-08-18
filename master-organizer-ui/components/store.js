@@ -9,6 +9,7 @@ export const store = reactive({
   tiltStatus: { active: 'MAIN', switching: false, watcherRunning: false, switchable: [] },
   focusedTicketId: null,
   switchingTicketId: null,
+  focusingTabTicketId: null,
 })
 
 export function versionGte(a, b) {
